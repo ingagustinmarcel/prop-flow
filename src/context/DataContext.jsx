@@ -109,6 +109,7 @@ export const DataProvider = ({ children }) => {
             if (updatedFields.name !== undefined) dbPayload.name = updatedFields.name;
             if (updatedFields.tenant !== undefined) dbPayload.tenant = updatedFields.tenant;
             if (updatedFields.lastIncrementDate !== undefined) dbPayload.last_increment_date = updatedFields.lastIncrementDate;
+            if (updatedFields.isActive !== undefined) dbPayload.is_active = updatedFields.isActive;
 
             const { error } = await supabase.from('units').update(dbPayload).eq('id', id);
             if (error) throw error;

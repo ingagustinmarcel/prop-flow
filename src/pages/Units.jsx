@@ -5,7 +5,7 @@ import DocumentsManager from '../components/DocumentsManager';
 import { Edit2, Check, Plus, Trash2, Home, FileText } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 
-const UnitCard = ({ unit, onSave, onOpenDocs }) => {
+const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ ...unit });
 
@@ -57,7 +57,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs }) => {
                     </button>
                     {!isEditing && (
                         <button
-                            onClick={() => window.confirm(`Delete ${unit.name}?`) && useData().deleteUnit(unit.id)}
+                            onClick={() => window.confirm(`Delete ${unit.name}?`) && onDelete(unit.id)}
                             className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
                             title="Delete or Archive Unit"
                         >
@@ -135,7 +135,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs }) => {
 };
 
 export default function Units() {
-    const { units, addUnit, updateUnit, toggleUnitActive } = useData();
+    const { units, addUnit, updateUnit, deleteUnit, toggleUnitActive } = useData();
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [showArchived, setShowArchived] = useState(false);
 
@@ -153,7 +153,11 @@ export default function Units() {
         addUnit(newUnit);
     };
 
-    const filteredUnits = units.filter(u => showArchived ? true : u.isActive);
+
+    const filteredUnits = units.filter(u => {
+        const isActive = u.isActive ?? true; // Default to true if undefined
+        return showArchived ? true : isActive;
+    });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -199,6 +203,7 @@ export default function Units() {
                             unit={unit}
                             onSave={updateUnit}
                             onOpenDocs={setSelectedUnit}
+                            onDelete={deleteUnit}
                         />
                         {!unit.isActive && (
                             <button
