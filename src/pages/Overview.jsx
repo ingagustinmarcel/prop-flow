@@ -7,8 +7,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useTranslation } from 'react-i18next';
 
 export default function Overview() {
-    const { t } = useTranslation();
-    const { units, payments, markPaid } = useData();
+    const { t, i18n } = useTranslation();
+    const { units, payments, expenses, markPaid } = useData();
 
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     const today = new Date();
@@ -37,26 +37,33 @@ export default function Overview() {
         return { totalUnits, occupancyRate, monthlyRevenue, balanceDue };
     }, [activeUnits, payments, currentMonth]);
 
-    // Chart Data Preparation (Mocking 12 months history for visual appeal based on current rent)
+    // Chart Data Preparation - Using REAL expense data
     const chartData = useMemo(() => {
         const data = [];
         for (let i = 11; i >= 0; i--) {
             const d = new Date();
             d.setMonth(d.getMonth() - i);
-            const monthLabel = d.toLocaleString('default', { month: 'short' });
+            const monthStr = d.toISOString().slice(0, 7); // YYYY-MM format
+            const monthLabel = d.toLocaleString(i18n.language, { month: 'short' });
 
-            // Mock data logic
-            const income = stats.monthlyRevenue * (0.9 + Math.random() * 0.2); // +/- variation
-            const expense = income * (0.2 + Math.random() * 0.15); // 20-35% expense ratio
+            // Calculate REAL income for this month
+            const monthIncome = activeUnits.reduce((sum, unit) => {
+                return sum + (unit.tenant ? Number(unit.rent) : 0);
+            }, 0);
+
+            // Calculate REAL expenses for this month
+            const monthExpenses = expenses
+                .filter(e => e.date && e.date.startsWith(monthStr))
+                .reduce((sum, e) => sum + Number(e.amount), 0);
 
             data.push({
                 name: monthLabel,
-                Income: Math.round(income),
-                Expenses: Math.round(expense)
+                Income: Math.round(monthIncome),
+                Expenses: Math.round(monthExpenses)
             });
         }
         return data;
-    }, [stats.monthlyRevenue]);
+    }, [activeUnits, expenses, i18n.language]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -166,7 +173,9 @@ export default function Overview() {
 
                 {/* Unit Status Summary */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">{t('overview.unitStatus')} ({new Date().toLocaleString('default', { month: 'long' })})</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">
+                        {t('overview.unitStatus')} ({new Date().toLocaleString(i18n.language, { month: 'long' })})
+                    </h3>
                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
                         {activeUnits.map(unit => {
                             // Check payment status
