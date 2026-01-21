@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
 import DocumentsManager from '../components/DocumentsManager';
-import { Edit2, Check, Plus, Trash2, Home, FileText } from 'lucide-react';
+import ExpenseModal from '../components/ExpenseModal';
+import { Edit2, Check, Plus, Trash2, Home, FileText, DollarSign } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 
-const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
+const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ ...unit });
 
@@ -40,9 +43,16 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
 
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => onAddExpense(unit)}
+                        className="p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 rounded-full transition-colors"
+                        title={t('units.addExpense')}
+                    >
+                        <DollarSign size={18} />
+                    </button>
+                    <button
                         onClick={() => onOpenDocs(unit)}
                         className="p-2 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-colors"
-                        title="Manage Documents"
+                        title={t('units.manageDocuments')}
                     >
                         <FileText size={18} />
                     </button>
@@ -59,7 +69,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
                         <button
                             onClick={() => window.confirm(`Delete ${unit.name}?`) && onDelete(unit.id)}
                             className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
-                            title="Delete or Archive Unit"
+                            title={t('units.deleteOrArchive')}
                         >
                             <Trash2 size={18} />
                         </button>
@@ -70,15 +80,15 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
             <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tenant</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.tenant')}</label>
                         {isEditing ? (
                             <input name="tenant" value={formData.tenant} onChange={handleChange} className="w-full text-sm border rounded px-2 py-1" />
                         ) : (
-                            <p className="text-sm font-medium text-slate-700">{unit.tenant || 'Vacant'}</p>
+                            <p className="text-sm font-medium text-slate-700">{unit.tenant || t('units.vacant')}</p>
                         )}
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rent / Mo</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.rentPerMonth')}</label>
                         {isEditing ? (
                             <input name="rent" type="number" value={formData.rent} onChange={handleChange} className="w-full text-sm border rounded px-2 py-1" />
                         ) : (
@@ -88,7 +98,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
                     <div className="space-y-1">
                         <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 h-full">
                             <div>
-                                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">Security Deposit</label>
+                                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">{t('units.securityDeposit')}</label>
                                 {isEditing ? (
                                     <input name="securityDeposit" type="number" value={formData.securityDeposit} onChange={handleChange} className="w-24 text-sm border border-blue-200 rounded px-2 py-1 mt-1" />
                                 ) : (
@@ -100,7 +110,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
                     <div className="space-y-1">
                         <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100 h-full">
                             <div>
-                                <label className="text-xs font-semibold text-emerald-500 uppercase tracking-wider block">Increment %</label>
+                                <label className="text-xs font-semibold text-emerald-500 uppercase tracking-wider block">{t('units.incrementPercent')}</label>
                                 {isEditing ? (
                                     <div className="flex items-center gap-1 mt-1">
                                         <input name="incrementPercentage" type="number" value={formData.incrementPercentage} onChange={handleChange} className="w-16 text-sm border border-emerald-200 rounded px-2 py-1" />
@@ -113,7 +123,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lease Start</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseStart')}</label>
                         {isEditing ? (
                             <input name="leaseStart" type="date" value={formData.leaseStart} onChange={handleChange} className="w-full text-xs border rounded px-1 py-1" />
                         ) : (
@@ -121,7 +131,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
                         )}
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lease End</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseEnd')}</label>
                         {isEditing ? (
                             <input name="leaseEnd" type="date" value={formData.leaseEnd} onChange={handleChange} className="w-full text-xs border rounded px-1 py-1" />
                         ) : (
@@ -135,9 +145,11 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete }) => {
 };
 
 export default function Units() {
-    const { units, addUnit, updateUnit, deleteUnit, toggleUnitActive } = useData();
+    const { t } = useTranslation();
+    const { units, addUnit, updateUnit, deleteUnit, toggleUnitActive, addExpense } = useData();
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [showArchived, setShowArchived] = useState(false);
+    const [expenseModalUnit, setExpenseModalUnit] = useState(null);
 
     const handleAddUnit = () => {
         const newUnit = {
@@ -153,9 +165,8 @@ export default function Units() {
         addUnit(newUnit);
     };
 
-
     const filteredUnits = units.filter(u => {
-        const isActive = u.isActive ?? true; // Default to true if undefined
+        const isActive = u.isActive ?? true;
         return showArchived ? true : isActive;
     });
 
@@ -163,24 +174,24 @@ export default function Units() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <header className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Property Units</h1>
-                    <p className="text-slate-500 mt-2">Manage your units, lease details, and tenants.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('units.title')}</h1>
+                    <p className="text-slate-500 mt-2">{t('units.subtitle')}</p>
                 </div>
                 <button
                     onClick={handleAddUnit}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-all active:scale-95"
                 >
                     <Plus size={20} />
-                    Add Unit
+                    {t('units.addUnit')}
                 </button>
             </header>
 
             <div className="flex items-center justify-between">
                 <p className="text-slate-500">
-                    Showing {filteredUnits.length} of {units.length} units
+                    {t('units.showing')} {filteredUnits.length} {t('units.of')} {units.length} {t('units.unitsLabel')}
                 </p>
                 <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-600">Show Archived</label>
+                    <label className="text-sm text-slate-600">{t('units.showArchived')}</label>
                     <button
                         onClick={() => setShowArchived(!showArchived)}
                         className={cn(
@@ -204,13 +215,14 @@ export default function Units() {
                             onSave={updateUnit}
                             onOpenDocs={setSelectedUnit}
                             onDelete={deleteUnit}
+                            onAddExpense={setExpenseModalUnit}
                         />
                         {!unit.isActive && (
                             <button
                                 onClick={() => toggleUnitActive(unit.id, true)}
                                 className="mt-2 text-xs text-emerald-600 font-medium hover:underline w-full text-center"
                             >
-                                Reactivate Unit
+                                {t('units.reactivateUnit')}
                             </button>
                         )}
                     </div>
@@ -220,10 +232,18 @@ export default function Units() {
             <Modal
                 isOpen={!!selectedUnit}
                 onClose={() => setSelectedUnit(null)}
-                title={`Documents: ${selectedUnit?.name}`}
+                title={`${t('units.documents')}: ${selectedUnit?.name}`}
             >
                 {selectedUnit && <DocumentsManager unitId={selectedUnit.id} />}
             </Modal>
+
+            <ExpenseModal
+                isOpen={!!expenseModalUnit}
+                onClose={() => setExpenseModalUnit(null)}
+                unitId={expenseModalUnit?.id}
+                unitName={expenseModalUnit?.name}
+                onSave={addExpense}
+            />
         </div>
     );
 }

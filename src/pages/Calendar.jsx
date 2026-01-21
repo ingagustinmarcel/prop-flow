@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
 import { cn } from '../lib/utils';
 import { ChevronRight, ChevronLeft, Download } from 'lucide-react';
@@ -9,39 +10,26 @@ const MONTHS = [
 ];
 
 export default function CalendarPage() {
+    const { t } = useTranslation();
     const { units, payments, markPaid } = useData();
     const [year, setYear] = useState(new Date().getFullYear());
 
-    // Helper to get status color
     const getPaymentStatus = (payment, unit) => {
-        if (!payment) return 'bg-slate-50 border-dashed border-slate-300'; // Unpaid/Future
+        if (!payment) return 'bg-slate-50 border-dashed border-slate-300';
 
         const day = new Date(payment.datePaid).getDate();
         if (day <= 10) return 'bg-green-100 text-green-700 border-green-200';
         if (day <= 20) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-        return 'bg-red-100 text-red-700 border-red-200'; // Severe Late
+        return 'bg-red-100 text-red-700 border-red-200';
     };
 
     const handleCellClick = (unitId, monthIndex) => {
         const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
-        // Simple prompt for manual override (in a real app, use a modal)
-        // Since we can't use window.prompt nicely in a highly polished UI, 
-        // I'll just check if it's not paid, then mark it paid as Today. 
-        // For "Manual Override", I'll mock a "select date" behavior by just toggling for now or 
-        // marking paid with current date if empty.
-        // Actually, let's just use window.prompt for the specific date requirement "Allow manual date overrides" 
-        // to ensure the user can test the color coding logic (e.g., enter a late date).
-
         const existing = payments.find(p => p.unitId === unitId && p.forMonth === monthStr);
-        // Note: editing existing payments isn't strictly in my DataContext 'markPaid' but I can add it or just ignore for simplicity.
-        // I will allow adding new payments via prompt.
 
         if (!existing) {
             const date = window.prompt(`Enter payment date for ${monthStr} (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
             if (date) {
-                // We need to manually inject this into payments list in DataContext, 
-                // Allow manual date overrides
-                console.log("Marking paid with date:", date);
                 markPaid(unitId, monthStr, date);
             }
         }
@@ -51,8 +39,8 @@ export default function CalendarPage() {
         <div className="space-y-8 animate-in fade-in duration-500 overflow-x-auto">
             <header className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Payment Calendar</h1>
-                    <p className="text-slate-500 mt-2">Track monthly rent collection performance.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('calendar.title')}</h1>
+                    <p className="text-slate-500 mt-2">{t('calendar.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                     <button onClick={() => setYear(y => y - 1)} className="p-2 hover:bg-slate-50 rounded-full"><ChevronLeft size={20} /></button>
@@ -64,7 +52,7 @@ export default function CalendarPage() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-w-[1000px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-[200px_repeat(12,1fr)] bg-slate-50 border-b border-slate-200">
-                    <div className="p-4 font-bold text-slate-700">Unit</div>
+                    <div className="p-4 font-bold text-slate-700">{t('calendar.unit')}</div>
                     {MONTHS.map(m => (
                         <div key={m} className="p-4 font-semibold text-slate-500 text-center text-sm border-l border-slate-200">{m}</div>
                     ))}
@@ -95,7 +83,7 @@ export default function CalendarPage() {
                                                 <>
                                                     <span className="flex flex-col items-center">
                                                         <span>{dayPaid}</span>
-                                                        <span className="text-[10px] font-normal opacity-75">Paid</span>
+                                                        <span className="text-[10px] font-normal opacity-75">{t('overview.paid')}</span>
                                                     </span>
                                                     <button
                                                         onClick={(e) => {
@@ -103,7 +91,7 @@ export default function CalendarPage() {
                                                             generateReceipt(payment, unit);
                                                         }}
                                                         className="absolute -top-1 -right-1 bg-white text-emerald-600 rounded-full p-0.5 border border-emerald-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                                                        title="Download Receipt"
+                                                        title={t('calendar.downloadReceipt')}
                                                     >
                                                         <Download size={10} />
                                                     </button>
@@ -122,9 +110,9 @@ export default function CalendarPage() {
 
             {/* Legend */}
             <div className="flex gap-6 justify-end text-sm text-slate-600">
-                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div> On Time (≤ 10th)</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div> Late (11-20th)</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 border border-red-200 rounded"></div> Severe ({'>'} 20th)</div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div> {t('calendar.onTime')}</div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div> {t('calendar.late')}</div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 border border-red-200 rounded"></div> {t('calendar.severe')}</div>
             </div>
         </div>
     );

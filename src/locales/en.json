@@ -1,0 +1,117 @@
+{
+    "nav": {
+        "overview": "Overview",
+        "units": "Units",
+        "cashflow": "Property Cashflow",
+        "calendar": "Payment Calendar",
+        "increments": "Rent Increments",
+        "calculators": "Calculators"
+    },
+    "overview": {
+        "title": "Dashboard Overview",
+        "subtitle": "Welcome back. Here's what's happening with your properties today.",
+        "recoverData": "Recover Local Data",
+        "totalUnits": "Total Units",
+        "occupancy": "Occupancy",
+        "monthlyRevenue": "Monthly Revenue",
+        "balanceDue": "Balance Due",
+        "fullyOccupied": "Fully Occupied",
+        "vacancy": "Vacancy",
+        "actionRequired": "Action Required",
+        "allClear": "All Clear",
+        "cashFlowAnalytics": "Cash Flow Analytics",
+        "income": "Income (Mo)",
+        "outgoing": "Outgoing (Mo)",
+        "netPosition": "Net Position",
+        "unitStatus": "Unit Status",
+        "vacant": "Vacant",
+        "paid": "Paid",
+        "markPaid": "Mark Paid"
+    },
+    "units": {
+        "title": "Property Units",
+        "subtitle": "Manage your units, lease details, and tenants.",
+        "addUnit": "Add Unit",
+        "showArchived": "Show Archived",
+        "showing": "Showing",
+        "of": "of",
+        "unitsLabel": "units",
+        "tenant": "Tenant",
+        "rentPerMonth": "Rent / Mo",
+        "securityDeposit": "Security Deposit",
+        "incrementPercent": "Increment %",
+        "leaseStart": "Lease Start",
+        "leaseEnd": "Lease End",
+        "manageDocuments": "Manage Documents",
+        "deleteOrArchive": "Delete or Archive Unit",
+        "reactivateUnit": "Reactivate Unit",
+        "documents": "Documents",
+        "addExpense": "Add Expense"
+    },
+    "cashflow": {
+        "title": "Financial Performance",
+        "subtitle": "Cashflow breakdown per unit.",
+        "annualProjection": "Annual Projection",
+        "annualRevenue": "Annual Revenue",
+        "netProfit": "Net Profit",
+        "profitMargin": "Profit Margin",
+        "topExpenses": "Top Expenses",
+        "noExpenses": "No expenses recorded."
+    },
+    "calendar": {
+        "title": "Payment Calendar",
+        "subtitle": "Track monthly rent collection performance.",
+        "unit": "Unit",
+        "onTime": "On Time (≤ 10th)",
+        "late": "Late (11-20th)",
+        "severe": "Severe (> 20th)",
+        "downloadReceipt": "Download Receipt"
+    },
+    "increments": {
+        "title": "Rent Increment Tracker",
+        "subtitle": "Monitor and apply annual rent increases.",
+        "currentRent": "Current Rent",
+        "incrementRate": "Increment Rate",
+        "nextRent": "Next Rent",
+        "lastIncrement": "Last Increment",
+        "nextIncrement": "Next Increment",
+        "applyIncrement": "Apply Increment",
+        "never": "Never"
+    },
+    "calculators": {
+        "title": "Property Calculators",
+        "subtitle": "Financial planning and projection tools.",
+        "rentProjection": "Rent Projection Calculator",
+        "initialRent": "Initial Monthly Rent",
+        "annualIncrease": "Annual Increase %",
+        "years": "Years",
+        "calculate": "Calculate",
+        "year": "Year",
+        "monthlyRent": "Monthly Rent",
+        "annualIncome": "Annual Income"
+    },
+    "expenses": {
+        "addExpense": "Add Expense",
+        "category": "Category",
+        "amount": "Amount",
+        "date": "Date",
+        "description": "Description",
+        "save": "Save",
+        "cancel": "Cancel",
+        "categories": {
+            "maintenance": "Maintenance",
+            "utilities": "Utilities",
+            "taxes": "Taxes",
+            "insurance": "Insurance",
+            "other": "Other"
+        }
+    },
+    "common": {
+        "delete": "Delete",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close",
+        "confirm": "Confirm"
+    }
+}

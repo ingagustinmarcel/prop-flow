@@ -4,8 +4,10 @@ import KPICard from '../components/KPICard';
 import { Users, Home, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 export default function Overview() {
+    const { t } = useTranslation();
     const { units, payments, markPaid } = useData();
 
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -60,8 +62,8 @@ export default function Overview() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <header className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-                    <p className="text-slate-500 mt-2">Welcome back. Here's what's happening with your properties today.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('overview.title')}</h1>
+                    <p className="text-slate-500 mt-2">{t('overview.subtitle')}</p>
                 </div>
                 {units.length === 0 && (
                     <button
@@ -72,7 +74,7 @@ export default function Overview() {
                         }}
                         className="text-xs font-semibold text-slate-500 underline hover:text-emerald-600"
                     >
-                        Recover Local Data
+                        {t('overview.recoverData')}
                     </button>
                 )}
             </header>
@@ -80,21 +82,21 @@ export default function Overview() {
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KPICard
-                    title="Total Units"
+                    title={t('overview.totalUnits')}
                     value={stats.totalUnits}
                     icon={Home}
                     color="blue"
                 />
                 <KPICard
-                    title="Occupancy"
+                    title={t('overview.occupancy')}
                     value={`${stats.occupancyRate}%`}
                     icon={Users}
                     color="emerald"
-                    trend={stats.occupancyRate === 100 ? "Fully Occupied" : `${100 - stats.occupancyRate}% Vacancy`}
+                    trend={stats.occupancyRate === 100 ? t('overview.fullyOccupied') : `${100 - stats.occupancyRate}% ${t('overview.vacancy')}`}
                     trendUp={stats.occupancyRate > 90}
                 />
                 <KPICard
-                    title="Monthly Revenue"
+                    title={t('overview.monthlyRevenue')}
                     value={formatCurrency(stats.monthlyRevenue)}
                     icon={DollarSign}
                     color="emerald"
@@ -102,11 +104,11 @@ export default function Overview() {
                     trendUp={true}
                 />
                 <KPICard
-                    title="Balance Due"
+                    title={t('overview.balanceDue')}
                     value={formatCurrency(stats.balanceDue)}
                     icon={AlertCircle}
                     color={stats.balanceDue > 0 ? "rose" : "emerald"}
-                    trend={stats.balanceDue > 0 ? "Action Required" : "All Clear"}
+                    trend={stats.balanceDue > 0 ? t('overview.actionRequired') : t('overview.allClear')}
                     trendUp={stats.balanceDue === 0}
                 />
             </div>
@@ -115,20 +117,20 @@ export default function Overview() {
                 {/* Chart Section */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-slate-800">Cash Flow Analytics</h3>
+                        <h3 className="text-lg font-bold text-slate-800">{t('overview.cashFlowAnalytics')}</h3>
 
                         {/* Chart Summary Stats */}
                         <div className="flex gap-4 text-sm">
                             <div className="text-right">
-                                <p className="text-xs text-slate-400">Income (Mo)</p>
+                                <p className="text-xs text-slate-400">{t('overview.income')}</p>
                                 <p className="font-bold text-emerald-600">+{formatCurrency(chartData[chartData.length - 1].Income)}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-slate-400">Outgoing (Mo)</p>
+                                <p className="text-xs text-slate-400">{t('overview.outgoing')}</p>
                                 <p className="font-bold text-rose-500">-{formatCurrency(chartData[chartData.length - 1].Expenses)}</p>
                             </div>
                             <div className="text-right pl-4 border-l border-slate-100">
-                                <p className="text-xs text-slate-400">Net Position</p>
+                                <p className="text-xs text-slate-400">{t('overview.netPosition')}</p>
                                 <p className={cn("font-bold", (chartData[chartData.length - 1].Income - chartData[chartData.length - 1].Expenses) >= 0 ? "text-slate-900" : "text-rose-600")}>
                                     {formatCurrency(chartData[chartData.length - 1].Income - chartData[chartData.length - 1].Expenses)}
                                 </p>
@@ -164,7 +166,7 @@ export default function Overview() {
 
                 {/* Unit Status Summary */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Unit Status ({new Date().toLocaleString('default', { month: 'long' })})</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">{t('overview.unitStatus')} ({new Date().toLocaleString('default', { month: 'long' })})</h3>
                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
                         {activeUnits.map(unit => {
                             // Check payment status
@@ -179,17 +181,17 @@ export default function Overview() {
 
                                     {isPaid ? (
                                         <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
-                                            <CheckCircle size={12} /> Paid
+                                            <CheckCircle size={12} /> {t('overview.paid')}
                                         </span>
                                     ) : unit.tenant ? (
                                         <button
                                             onClick={() => markPaid(unit.id, currentMonth)}
                                             className="text-xs font-medium bg-slate-900 text-white px-3 py-1.5 rounded-full hover:bg-slate-700 transition"
                                         >
-                                            Mark Paid
+                                            {t('overview.markPaid')}
                                         </button>
                                     ) : (
-                                        <span className="text-xs text-slate-400 italic">Vacant</span>
+                                        <span className="text-xs text-slate-400 italic">{t('overview.vacant')}</span>
                                     )}
                                     {unit.tenant && !isPaid && (
                                         <p className="text-[10px] text-slate-400 text-center mt-1">{formatCurrency(unit.rent)}</p>

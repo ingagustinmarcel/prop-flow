@@ -1,0 +1,117 @@
+{
+    "nav": {
+        "overview": "Resumen",
+        "units": "Unidades",
+        "cashflow": "Flujo de Caja",
+        "calendar": "Calendario de Pagos",
+        "increments": "Incrementos de Alquiler",
+        "calculators": "Calculadoras"
+    },
+    "overview": {
+        "title": "Panel de Control",
+        "subtitle": "Bienvenido de nuevo. Esto es lo que está pasando con tus propiedades hoy.",
+        "recoverData": "Recuperar Datos Locales",
+        "totalUnits": "Total de Unidades",
+        "occupancy": "Ocupación",
+        "monthlyRevenue": "Ingresos Mensuales",
+        "balanceDue": "Saldo Pendiente",
+        "fullyOccupied": "Totalmente Ocupado",
+        "vacancy": "Vacante",
+        "actionRequired": "Acción Requerida",
+        "allClear": "Todo en Orden",
+        "cashFlowAnalytics": "Análisis de Flujo de Caja",
+        "income": "Ingresos (Mes)",
+        "outgoing": "Gastos (Mes)",
+        "netPosition": "Posición Neta",
+        "unitStatus": "Estado de Unidades",
+        "vacant": "Vacante",
+        "paid": "Pagado",
+        "markPaid": "Marcar como Pagado"
+    },
+    "units": {
+        "title": "Unidades de Propiedad",
+        "subtitle": "Administra tus unidades, detalles de arrendamiento e inquilinos.",
+        "addUnit": "Agregar Unidad",
+        "showArchived": "Mostrar Archivadas",
+        "showing": "Mostrando",
+        "of": "de",
+        "unitsLabel": "unidades",
+        "tenant": "Inquilino",
+        "rentPerMonth": "Alquiler / Mes",
+        "securityDeposit": "Depósito de Garantía",
+        "incrementPercent": "Incremento %",
+        "leaseStart": "Inicio de Contrato",
+        "leaseEnd": "Fin de Contrato",
+        "manageDocuments": "Administrar Documentos",
+        "deleteOrArchive": "Eliminar o Archivar Unidad",
+        "reactivateUnit": "Reactivar Unidad",
+        "documents": "Documentos",
+        "addExpense": "Agregar Gasto"
+    },
+    "cashflow": {
+        "title": "Rendimiento Financiero",
+        "subtitle": "Desglose de flujo de caja por unidad.",
+        "annualProjection": "Proyección Anual",
+        "annualRevenue": "Ingresos Anuales",
+        "netProfit": "Ganancia Neta",
+        "profitMargin": "Margen de Ganancia",
+        "topExpenses": "Principales Gastos",
+        "noExpenses": "No hay gastos registrados."
+    },
+    "calendar": {
+        "title": "Calendario de Pagos",
+        "subtitle": "Seguimiento del rendimiento de cobro de alquileres mensuales.",
+        "unit": "Unidad",
+        "onTime": "A Tiempo (≤ 10)",
+        "late": "Tarde (11-20)",
+        "severe": "Muy Tarde (> 20)",
+        "downloadReceipt": "Descargar Recibo"
+    },
+    "increments": {
+        "title": "Seguimiento de Incrementos",
+        "subtitle": "Monitorea y aplica aumentos anuales de alquiler.",
+        "currentRent": "Alquiler Actual",
+        "incrementRate": "Tasa de Incremento",
+        "nextRent": "Próximo Alquiler",
+        "lastIncrement": "Último Incremento",
+        "nextIncrement": "Próximo Incremento",
+        "applyIncrement": "Aplicar Incremento",
+        "never": "Nunca"
+    },
+    "calculators": {
+        "title": "Calculadoras de Propiedad",
+        "subtitle": "Herramientas de planificación y proyección financiera.",
+        "rentProjection": "Calculadora de Proyección de Alquiler",
+        "initialRent": "Alquiler Mensual Inicial",
+        "annualIncrease": "Aumento Anual %",
+        "years": "Años",
+        "calculate": "Calcular",
+        "year": "Año",
+        "monthlyRent": "Alquiler Mensual",
+        "annualIncome": "Ingresos Anuales"
+    },
+    "expenses": {
+        "addExpense": "Agregar Gasto",
+        "category": "Categoría",
+        "amount": "Monto",
+        "date": "Fecha",
+        "description": "Descripción",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "categories": {
+            "maintenance": "Mantenimiento",
+            "utilities": "Servicios",
+            "taxes": "Impuestos",
+            "insurance": "Seguro",
+            "other": "Otro"
+        }
+    },
+    "common": {
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "close": "Cerrar",
+        "confirm": "Confirmar"
+    }
+}
