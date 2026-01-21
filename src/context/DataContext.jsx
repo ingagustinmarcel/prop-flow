@@ -150,20 +150,29 @@ export const DataProvider = ({ children }) => {
 
     // --- Expenses ---
     const addExpense = async (expense) => {
+        console.log('📝 Adding expense:', expense);
         const tempId = crypto.randomUUID();
         setExpenses([...expenses, { ...expense, id: tempId, user_id: user.id }]);
 
         try {
-            const { data, error } = await supabase.from('expenses').insert([{
-                ...expense,
+            // Create payload with ONLY database fields (snake_case)
+            const payload = {
+                category: expense.category,
+                amount: expense.amount,
+                date: expense.date,
+                description: expense.description,
                 user_id: user.id,
-                unit_id: expense.unitId // map camel back to snake
-            }]).select();
+                unit_id: expense.unitId
+            };
+            console.log('💾 Saving to database:', payload);
+
+            const { data, error } = await supabase.from('expenses').insert([payload]).select();
 
             if (error) throw error;
+            console.log('✅ Expense saved:', data[0]);
             setExpenses(prev => prev.map(e => e.id === tempId ? { ...data[0], unitId: data[0].unit_id } : e));
         } catch (err) {
-            console.error("Error adding expense:", err);
+            console.error("❌ Error adding expense:", err);
             setExpenses(prev => prev.filter(e => e.id !== tempId));
         }
     };
