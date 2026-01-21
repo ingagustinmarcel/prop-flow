@@ -11,28 +11,29 @@ export default function Overview() {
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     const today = new Date();
 
+    const activeUnits = useMemo(() => units.filter(u => u.isActive), [units]);
+
     const stats = useMemo(() => {
-        const totalUnits = units.length;
-        const occupiedUnits = units.filter(u => u.tenant).length;
+        const totalUnits = activeUnits.length;
+        const occupiedUnits = activeUnits.filter(u => u.tenant).length;
         const occupancyRate = totalUnits ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
         // Projected Monthly Revenue
-        const monthlyRevenue = units.reduce((sum, unit) => sum + (unit.tenant ? Number(unit.rent) : 0), 0);
+        const monthlyRevenue = activeUnits.reduce((sum, unit) => sum + (unit.tenant ? Number(unit.rent) : 0), 0);
 
         // Balance Due (Current Month)
-        // Find units that haven't paid for currentMonth
         const paidUnitIds = new Set(payments
             .filter(p => p.forMonth === currentMonth)
             .map(p => p.unitId));
 
-        const balanceDue = units.reduce((sum, unit) => {
+        const balanceDue = activeUnits.reduce((sum, unit) => {
             if (!unit.tenant) return sum;
             if (!paidUnitIds.has(unit.id)) return sum + Number(unit.rent);
             return sum;
         }, 0);
 
         return { totalUnits, occupancyRate, monthlyRevenue, balanceDue };
-    }, [units, payments, currentMonth]);
+    }, [activeUnits, payments, currentMonth]);
 
     // Chart Data Preparation (Mocking 12 months history for visual appeal based on current rent)
     const chartData = useMemo(() => {
@@ -165,7 +166,7 @@ export default function Overview() {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">Unit Status ({new Date().toLocaleString('default', { month: 'long' })})</h3>
                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
-                        {units.map(unit => {
+                        {activeUnits.map(unit => {
                             // Check payment status
                             const isPaid = payments.some(p => p.unitId === unit.id && p.forMonth === currentMonth);
 

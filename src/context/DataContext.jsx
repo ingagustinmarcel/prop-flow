@@ -21,7 +21,8 @@ export const DataProvider = ({ children }) => {
         incrementPercentage: u.increment_percentage,
         leaseStart: u.lease_start,
         leaseEnd: u.lease_end,
-        lastIncrementDate: u.last_increment_date
+        lastIncrementDate: u.last_increment_date,
+        isActive: u.is_active ?? true
     });
 
     const mapUnitToDB = (u) => ({
@@ -33,6 +34,7 @@ export const DataProvider = ({ children }) => {
         lease_start: u.leaseStart,
         lease_end: u.leaseEnd,
         last_increment_date: u.lastIncrementDate,
+        is_active: u.isActive ?? true,
         user_id: user.id
     });
 
@@ -114,6 +116,35 @@ export const DataProvider = ({ children }) => {
             console.error("Error updating unit:", err);
             fetchAndNormalize();
         }
+    };
+
+    const deleteUnit = async (id) => {
+        try {
+            // First check if it has any associated data that might block deletion (though cascades are on)
+            // But we want to follow user's logic: if "has info" -> archive instead.
+            const hasPayments = payments.some(p => p.unitId === id);
+            const hasExpenses = expenses.some(e => e.unitId === id);
+
+            if (hasPayments || hasExpenses) {
+                // Archive instead of delete
+                await updateUnit(id, { isActive: false });
+                alert("Unit has financial history. It has been archived instead of deleted.");
+                return;
+            }
+
+            // Attempt deletion
+            const { error } = await supabase.from('units').delete().eq('id', id);
+            if (error) throw error;
+
+            setUnits(prev => prev.filter(u => u.id !== id));
+        } catch (err) {
+            console.error("Error during unit deletion:", err);
+            alert("Failed to delete unit. It might have linked documents or other data.");
+        }
+    };
+
+    const toggleUnitActive = async (id, status) => {
+        await updateUnit(id, { isActive: status });
     };
 
     // --- Expenses ---
@@ -211,6 +242,8 @@ export const DataProvider = ({ children }) => {
             payments,
             addUnit,
             updateUnit,
+            deleteUnit,
+            toggleUnitActive,
             addExpense,
             markPaid,
             migrateLocalData,

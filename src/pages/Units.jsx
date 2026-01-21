@@ -55,6 +55,15 @@ const UnitCard = ({ unit, onSave, onOpenDocs }) => {
                     >
                         {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
                     </button>
+                    {!isEditing && (
+                        <button
+                            onClick={() => window.confirm(`Delete ${unit.name}?`) && useData().deleteUnit(unit.id)}
+                            className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
+                            title="Delete or Archive Unit"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -126,8 +135,9 @@ const UnitCard = ({ unit, onSave, onOpenDocs }) => {
 };
 
 export default function Units() {
-    const { units, addUnit, updateUnit } = useData();
+    const { units, addUnit, updateUnit, toggleUnitActive } = useData();
     const [selectedUnit, setSelectedUnit] = useState(null);
+    const [showArchived, setShowArchived] = useState(false);
 
     const handleAddUnit = () => {
         const newUnit = {
@@ -138,9 +148,12 @@ export default function Units() {
             rent: 1000,
             securityDeposit: 1000,
             incrementPercentage: 5,
+            isActive: true
         };
         addUnit(newUnit);
     };
+
+    const filteredUnits = units.filter(u => showArchived ? true : u.isActive);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -158,14 +171,44 @@ export default function Units() {
                 </button>
             </header>
 
+            <div className="flex items-center justify-between">
+                <p className="text-slate-500">
+                    Showing {filteredUnits.length} of {units.length} units
+                </p>
+                <div className="flex items-center gap-2">
+                    <label className="text-sm text-slate-600">Show Archived</label>
+                    <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className={cn(
+                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                            showArchived ? "bg-emerald-600" : "bg-slate-200"
+                        )}
+                    >
+                        <span className={cn(
+                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                            showArchived ? "translate-x-6" : "translate-x-1"
+                        )} />
+                    </button>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {units.map(unit => (
-                    <UnitCard
-                        key={unit.id}
-                        unit={unit}
-                        onSave={updateUnit}
-                        onOpenDocs={setSelectedUnit}
-                    />
+                {filteredUnits.map(unit => (
+                    <div key={unit.id} className={cn(!unit.isActive && "opacity-60 grayscale-[0.5]")}>
+                        <UnitCard
+                            unit={unit}
+                            onSave={updateUnit}
+                            onOpenDocs={setSelectedUnit}
+                        />
+                        {!unit.isActive && (
+                            <button
+                                onClick={() => toggleUnitActive(unit.id, true)}
+                                className="mt-2 text-xs text-emerald-600 font-medium hover:underline w-full text-center"
+                            >
+                                Reactivate Unit
+                            </button>
+                        )}
+                    </div>
                 ))}
             </div>
 

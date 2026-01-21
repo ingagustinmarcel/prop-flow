@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { cn } from '../lib/utils';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Download } from 'lucide-react';
+import { generateReceipt } from '../lib/receiptService';
 
 const MONTHS = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -89,12 +90,24 @@ export default function CalendarPage() {
                                         className="p-2 border-l border-slate-100 relative group cursor-pointer"
                                         onClick={() => handleCellClick(unit.id, idx)}
                                     >
-                                        <div className={cn("w-full h-full rounded-md flex items-center justify-center text-xs font-bold transition-all border", statusClass)}>
+                                        <div className={cn("w-full h-full rounded-md flex items-center justify-center text-xs font-bold transition-all border relative", statusClass)}>
                                             {dayPaid ? (
-                                                <span className="flex flex-col items-center">
-                                                    <span>{dayPaid}</span>
-                                                    <span className="text-[10px] font-normal opacity-75">Paid</span>
-                                                </span>
+                                                <>
+                                                    <span className="flex flex-col items-center">
+                                                        <span>{dayPaid}</span>
+                                                        <span className="text-[10px] font-normal opacity-75">Paid</span>
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            generateReceipt(payment, unit);
+                                                        }}
+                                                        className="absolute -top-1 -right-1 bg-white text-emerald-600 rounded-full p-0.5 border border-emerald-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                                                        title="Download Receipt"
+                                                    >
+                                                        <Download size={10} />
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <span className="opacity-0 group-hover:opacity-100 text-slate-400">-</span>
                                             )}
