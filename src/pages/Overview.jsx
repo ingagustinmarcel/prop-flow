@@ -174,7 +174,7 @@ export default function Overview() {
                 {/* Unit Status Summary */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">
-                        {t('overview.unitStatus')} ({new Date().toLocaleString(i18n.language, { month: 'long' })})
+                        {t('overview.unitStatus')} (<span className="capitalize">{new Date().toLocaleString(i18n.language, { month: 'long' })}</span>)
                     </h3>
                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
                         {activeUnits.map(unit => {

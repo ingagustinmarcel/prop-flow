@@ -83,7 +83,22 @@
         "lastIncrement": "Last Increment",
         "nextIncrement": "Next Increment",
         "applyIncrement": "Apply Increment",
+        "notifyTenant": "Notify Tenant",
+        "increase": "Increase",
+        "mo": "mo",
+        "missingEmail": "Add email in Units to notify",
+        "automationNote": "Automation Active: Rents will automatically update in the system on the scheduled dates. Tenants should be notified 30 days in advance as per local regulations.",
+        "overdue": "Overdue",
+        "inDays": "in {{days}} days",
         "never": "Never"
+    },
+    "email": {
+        "to": "To",
+        "subject": "Subject",
+        "message": "Message",
+        "openMailClient": "Open Email App",
+        "templateSubject": "Important: Rent Adjustment Notice - {{unitName}}",
+        "templateBody": "Dear {{tenantName}},\n\nThis is to inform you that in accordance with our lease agreement, the monthly rent for {{unitName}} will be adjusted effective {{newDate}}.\n\nCurrent Rent: {{oldRent}}\nNew Monthly Rent: {{newRent}} (+{{increaseAmount}})\n\nPlease arrange for payments to reflect this change starting from that date.\n\nRegards,\nProperty Management"
     },
     "calculators": {
         "title": "Property Calculators",
@@ -132,6 +147,7 @@
         "save": "Save",
         "cancel": "Cancel",
         "close": "Close",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "previewEmail": "Review Email Notification"
     }
 }

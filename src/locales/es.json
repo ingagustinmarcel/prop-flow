@@ -83,7 +83,22 @@
         "lastIncrement": "Último Incremento",
         "nextIncrement": "Próximo Incremento",
         "applyIncrement": "Aplicar Incremento",
+        "notifyTenant": "Notificar Inquilino",
+        "increase": "Aumento",
+        "mo": "Mes",
+        "missingEmail": "Agregar email en Unidades",
+        "automationNote": "Automatización Activa: Los alquileres se actualizarán automáticamente en las fechas programadas. Se debe notificar a los inquilinos con 30 días de anticipación según regulaciones locales.",
+        "overdue": "Vencido",
+        "inDays": "en {{days}} días",
         "never": "Nunca"
+    },
+    "email": {
+        "to": "Para",
+        "subject": "Asunto",
+        "message": "Mensaje",
+        "openMailClient": "Abrir Correo",
+        "templateSubject": "Importante: Aviso de Ajuste de Alquiler - {{unitName}}",
+        "templateBody": "Estimado/a {{tenantName}},\n\nLe informamos que, de acuerdo con nuestro contrato de arrendamiento, el alquiler mensual de la unidad {{unitName}} se ajustará a partir del {{newDate}}.\n\nAlquiler Actual: {{oldRent}}\nNuevo Alquiler Mensual: {{newRent}} (+{{increaseAmount}})\n\nPor favor, realice los pagos reflejando este cambio a partir de esa fecha.\n\nSaludos cordiales,\nAdministración"
     },
     "calculators": {
         "title": "Calculadoras de Propiedad",
@@ -132,6 +147,7 @@
         "save": "Guardar",
         "cancel": "Cancelar",
         "close": "Cerrar",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "previewEmail": "Revisar Notificación por Correo"
     }
 }

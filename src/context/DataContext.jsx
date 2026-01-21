@@ -22,7 +22,8 @@ export const DataProvider = ({ children }) => {
         leaseStart: u.lease_start,
         leaseEnd: u.lease_end,
         lastIncrementDate: u.last_increment_date,
-        isActive: u.is_active ?? true
+        isActive: u.is_active ?? true,
+        tenantEmail: u.tenant_email
     });
 
     const mapUnitToDB = (u) => ({
@@ -35,6 +36,7 @@ export const DataProvider = ({ children }) => {
         lease_end: u.leaseEnd,
         last_increment_date: u.lastIncrementDate,
         is_active: u.isActive ?? true,
+        tenant_email: u.tenantEmail,
         user_id: user.id
     });
 
@@ -110,6 +112,7 @@ export const DataProvider = ({ children }) => {
             if (updatedFields.tenant !== undefined) dbPayload.tenant = updatedFields.tenant;
             if (updatedFields.lastIncrementDate !== undefined) dbPayload.last_increment_date = updatedFields.lastIncrementDate;
             if (updatedFields.isActive !== undefined) dbPayload.is_active = updatedFields.isActive;
+            if (updatedFields.tenantEmail !== undefined) dbPayload.tenant_email = updatedFields.tenantEmail;
 
             const { error } = await supabase.from('units').update(dbPayload).eq('id', id);
             if (error) throw error;

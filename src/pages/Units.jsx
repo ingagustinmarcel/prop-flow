@@ -107,6 +107,18 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                         ) : (
                             <p className="text-sm font-medium text-slate-700">{unit.tenant || t('units.vacant')}</p>
                         )}
+                        {/* Tenant Email */}
+                        {isEditing ? (
+                            <input
+                                name="tenantEmail"
+                                value={formData.tenantEmail || ''}
+                                onChange={handleChange}
+                                placeholder="email@example.com"
+                                className="w-full text-xs border rounded px-2 py-1 mt-1 text-slate-500"
+                            />
+                        ) : unit.tenantEmail && (
+                            <p className="text-xs text-slate-400 mt-1">{unit.tenantEmail}</p>
+                        )}
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.rentPerMonth')}</label>
