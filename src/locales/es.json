@@ -95,7 +95,20 @@
         "calculate": "Calcular",
         "year": "Año",
         "monthlyRent": "Alquiler Mensual",
-        "annualIncome": "Ingresos Anuales"
+        "annualIncome": "Ingresos Anuales",
+        "ipcTitle": "Ajuste Automático (IPC/ICL)",
+        "poweredByIndec": "Fuente: INDEC / Datos Argentina",
+        "ipcDescription": "Calcula automáticamente el ajuste cuatrimestral basado en los últimos 4 meses de IPC publicados oficialmente.",
+        "currentRent": "Alquiler Actual",
+        "increasePercent": "Incremento %",
+        "calculating": "Calculando...",
+        "calculateAuto": "Calcular Ajuste",
+        "newRent": "Nuevo Monto Alquiler",
+        "totalAdjustment": "Ajuste Total Cuatrimestral",
+        "breakdown": "Desglose Mensual",
+        "errorFetch": "No se pudo conectar con el INDEC. Intente más tarde.",
+        "current": "Actual",
+        "future": "Proyección Futura"
     },
     "expenses": {
         "addExpense": "Agregar Gasto",

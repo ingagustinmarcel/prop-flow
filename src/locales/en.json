@@ -95,7 +95,20 @@
         "calculate": "Calculate",
         "year": "Year",
         "monthlyRent": "Monthly Rent",
-        "annualIncome": "Annual Income"
+        "annualIncome": "Annual Income",
+        "ipcTitle": "Auto Adjustment (IPC/ICL)",
+        "poweredByIndec": "Powered by INDEC / Datos Argentina",
+        "ipcDescription": "Automatically calculates the quarterly adjustment based on the latest 4 months of IPC published by the government.",
+        "currentRent": "Current Rent",
+        "increasePercent": "Increase %",
+        "calculating": "Calculating...",
+        "calculateAuto": "Calculate Adjustment",
+        "newRent": "New Rent Amount",
+        "totalAdjustment": "Total 4-Month Adjustment",
+        "breakdown": "Monthly Breakdown",
+        "errorFetch": "Could not connect to INDEC API. Try again later.",
+        "current": "Current",
+        "future": "Projected Future"
     },
     "expenses": {
         "addExpense": "Add Expense",
