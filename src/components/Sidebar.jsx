@@ -8,9 +8,11 @@ import {
     TrendingUp,
     Wallet,
     CalendarCheck,
-    Globe
+    Globe,
+    LogOut
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 const SidebarItem = ({ to, icon: Icon, label }) => (
     <NavLink
@@ -29,6 +31,7 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
 
 export default function Sidebar() {
     const { t, i18n } = useTranslation();
+    const { signOut } = useAuth();
     const [currentLang, setCurrentLang] = useState(i18n.language);
 
     const toggleLanguage = () => {
@@ -55,13 +58,20 @@ export default function Sidebar() {
                 <SidebarItem to="/calculators" icon={Calculator} label={t('nav.calculators')} />
             </nav>
 
-            <div className="p-4 border-t border-slate-100">
+            <div className="p-4 border-t border-slate-100 space-y-2">
                 <button
                     onClick={toggleLanguage}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium text-slate-700"
                 >
                     <Globe size={16} />
                     <span>{currentLang === 'en' ? 'Español' : 'English'}</span>
+                </button>
+                <button
+                    onClick={signOut}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                    <LogOut size={16} />
+                    <span>{t('sidebar.logout')}</span>
                 </button>
             </div>
 

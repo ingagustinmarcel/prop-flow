@@ -7,6 +7,9 @@
         "increments": "Incrementos de Alquiler",
         "calculators": "Calculadoras"
     },
+    "sidebar": {
+        "logout": "Cerrar Sesión"
+    },
     "overview": {
         "title": "Panel de Control",
         "subtitle": "Bienvenido de nuevo. Esto es lo que está pasando con tus propiedades hoy.",
@@ -46,7 +49,9 @@
         "deleteOrArchive": "Eliminar o Archivar Unidad",
         "reactivateUnit": "Reactivar Unidad",
         "documents": "Documentos",
-        "addExpense": "Agregar Gasto"
+        "addExpense": "Agregar Gasto",
+        "save": "Guardar",
+        "cancelEdit": "Cancelar Edición"
     },
     "cashflow": {
         "title": "Rendimiento Financiero",
@@ -56,7 +61,9 @@
         "netProfit": "Ganancia Neta",
         "profitMargin": "Margen de Ganancia",
         "topExpenses": "Principales Gastos",
-        "noExpenses": "No hay gastos registrados."
+        "noExpenses": "No hay gastos registrados.",
+        "deleteExpense": "Eliminar Gasto",
+        "confirmDelete": "¿Estás seguro de que quieres eliminar este gasto de {{category}}?"
     },
     "calendar": {
         "title": "Calendario de Pagos",

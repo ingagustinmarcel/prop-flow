@@ -177,6 +177,18 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const deleteExpense = async (expenseId) => {
+        try {
+            const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
+            if (error) throw error;
+
+            setExpenses(prev => prev.filter(e => e.id !== expenseId));
+        } catch (err) {
+            console.error("❌ Error deleting expense:", err);
+            alert("Failed to delete expense.");
+        }
+    };
+
     // --- Payments ---
     const markPaid = async (unitId, forMonth, customDate = null) => {
         // Prevent dupes locally if we can check
@@ -255,6 +267,7 @@ export const DataProvider = ({ children }) => {
             deleteUnit,
             toggleUnitActive,
             addExpense,
+            deleteExpense,
             markPaid,
             migrateLocalData,
             loading

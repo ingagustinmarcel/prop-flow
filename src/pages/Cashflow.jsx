@@ -2,10 +2,17 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
 import { formatCurrency, cn } from '../lib/utils';
+import { Trash2 } from 'lucide-react';
 
 export default function Cashflow() {
     const { t } = useTranslation();
-    const { units, expenses } = useData();
+    const { units, expenses, deleteExpense } = useData();
+
+    const handleDeleteExpense = (expenseId, category) => {
+        if (window.confirm(t('cashflow.confirmDelete', { category }))) {
+            deleteExpense(expenseId);
+        }
+    };
 
     const financials = useMemo(() => {
         return units.map(unit => {
@@ -76,9 +83,18 @@ export default function Cashflow() {
                                 {item.unitExpenses.length > 0 ? (
                                     <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
                                         {item.unitExpenses.map(exp => (
-                                            <div key={exp.id} className="flex justify-between items-center text-sm">
-                                                <span className="text-slate-600 truncate max-w-[120px]">{exp.category}</span>
-                                                <span className="font-medium text-slate-900">-{formatCurrency(exp.amount)}</span>
+                                            <div key={exp.id} className="flex justify-between items-center text-sm group">
+                                                <span className="text-slate-600 truncate max-w-[100px]">{exp.category}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-slate-900">-{formatCurrency(exp.amount)}</span>
+                                                    <button
+                                                        onClick={() => handleDeleteExpense(exp.id, exp.category)}
+                                                        className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                                                        title={t('cashflow.deleteExpense')}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

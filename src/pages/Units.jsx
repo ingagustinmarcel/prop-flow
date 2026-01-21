@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
 import DocumentsManager from '../components/DocumentsManager';
 import ExpenseModal from '../components/ExpenseModal';
-import { Edit2, Check, Plus, Trash2, Home, FileText, DollarSign } from 'lucide-react';
+import { Edit2, Check, Plus, Trash2, Home, FileText, DollarSign, X } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 
 const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
@@ -19,6 +19,11 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
 
     const handleSave = () => {
         onSave(unit.id, formData);
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setFormData({ ...unit });
         setIsEditing(false);
     };
 
@@ -56,23 +61,39 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                     >
                         <FileText size={18} />
                     </button>
-                    <button
-                        onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                        className={cn(
-                            "p-2 rounded-full transition-colors",
-                            isEditing ? "bg-emerald-500 text-white hover:bg-emerald-600" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                        )}
-                    >
-                        {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
-                    </button>
-                    {!isEditing && (
-                        <button
-                            onClick={() => window.confirm(`Delete ${unit.name}?`) && onDelete(unit.id)}
-                            className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
-                            title={t('units.deleteOrArchive')}
-                        >
-                            <Trash2 size={18} />
-                        </button>
+                    {isEditing ? (
+                        <>
+                            <button
+                                onClick={handleSave}
+                                className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full transition-colors"
+                                title={t('units.save')}
+                            >
+                                <Check size={18} />
+                            </button>
+                            <button
+                                onClick={handleCancel}
+                                className="p-2 bg-slate-200 text-slate-600 hover:bg-slate-300 rounded-full transition-colors"
+                                title={t('units.cancelEdit')}
+                            >
+                                <X size={18} />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors"
+                            >
+                                <Edit2 size={18} />
+                            </button>
+                            <button
+                                onClick={() => window.confirm(`Delete ${unit.name}?`) && onDelete(unit.id)}
+                                className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
+                                title={t('units.deleteOrArchive')}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
