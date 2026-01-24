@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, ArrowRight, DollarSign, Percent, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { DollarSign, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { useTranslation } from 'react-i18next';
+import { fetchIPCData } from '../lib/indec';
 import { fetchArquilerData, getAvailableIndices } from '../lib/arquiler';
 
 export default function Calculators() {
     const { t } = useTranslation();
 
-    // --- Manual Calculator State ---
-    const [currentRent, setCurrentRent] = useState(1200);
-    const [increasePercent, setIncreasePercent] = useState(5);
-    const futureRent = Math.round(currentRent * (1 + (increasePercent / 100)));
-    const difference = futureRent - currentRent;
-
-    // --- Auto IPC Calculator State ---
-    // --- Auto Index Calculator State ---
-    const [indexType, setIndexType] = useState('icl');
+    // --- Auto IPC/Index Calculator State ---
+    const [indexType, setIndexType] = useState('ipc'); // Forced to IPC
     const [arquilerData, setArquilerData] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState('');
+    const [ipcHistory, setIpcHistory] = useState([]); // Store Indec History
 
-    // Manual Rent is reused (ipcRent -> rentBase)
+    // Auto Calc Inputs
     const [rentBase, setRentBase] = useState(1000);
     const [calculationResult, setCalculationResult] = useState(null);
     const [loadingIndices, setLoadingIndices] = useState(false);
@@ -29,13 +24,28 @@ export default function Calculators() {
     useEffect(() => {
         const load = async () => {
             setLoadingIndices(true);
-            const data = await fetchArquilerData();
-            setArquilerData(data);
-            setLoadingIndices(false);
+            try {
+                // Fetch Calculator Data (Arquiler)
+                const data = await fetchArquilerData();
+                setArquilerData(data);
 
-            // Set default month if available
-            if (data && data.icl && data.icl.length > 0) {
-                setSelectedMonth(data.icl[0].date);
+                // Fetch Historical List (Indec)
+                try {
+                    const history = await fetchIPCData();
+                    setIpcHistory(history);
+                } catch (e) {
+                    console.warn("IPC History fetch failed", e);
+                }
+
+                // Set default month if available (Prefer 'ipc')
+                if (data && data.ipc && data.ipc.length > 0) {
+                    setSelectedMonth(data.ipc[0].date);
+                }
+            } catch (err) {
+                console.error("Error loading data", err);
+                setError(t('calculators.errorFetch'));
+            } finally {
+                setLoadingIndices(false);
             }
         };
         load();
@@ -69,23 +79,22 @@ export default function Calculators() {
                 <p className="text-slate-500 mt-2">{t('calculators.subtitle')}</p>
             </header>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-
-                {/* 1. AUTO IPC CALCULATOR (New Feature) */}
+            <div className="max-w-3xl mx-auto">
+                {/* 1. AUTO IPC CALCULATOR */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-slate-50 flex items-center gap-3">
                         <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
                             <RefreshCw size={20} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900">{t('calculators.officialIndicesTitle') || "Oficial Indices"}</h3>
+                            <h3 className="text-lg font-bold text-slate-900">{t('calculators.ipcTitle') || "IPC Calculator"}</h3>
                             <p className="text-xs text-indigo-600 font-medium">✨ Powered by Arquiler.com</p>
                         </div>
                     </div>
 
                     <div className="p-6 space-y-6 flex-1 flex flex-col">
                         <p className="text-sm text-slate-500">
-                            Calculate rent adjustments using official indices (ICL, Casa Propia, IPC).
+                            {t('calculators.ipcDescription') || "Calculate rent adjustments using INDEC's IPC (Consumer Price Index)."}
                         </p>
 
                         <div className="space-y-4">
@@ -103,6 +112,28 @@ export default function Calculators() {
                                         placeholder="0"
                                     />
                                 </div>
+                            </div>
+
+                            {/* Month Selector */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Adjustment Date</label>
+                                {loadingIndices ? (
+                                    <div className="flex items-center gap-2 text-sm text-slate-500 py-2.5">
+                                        <Loader2 className="animate-spin" size={16} /> Loading data...
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="w-full rounded-lg border border-slate-300 py-2.5 px-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        {arquilerData && arquilerData[indexType]?.map(item => (
+                                            <option key={item.date} value={item.date}>
+                                                {new Date(item.date).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <button
@@ -145,66 +176,44 @@ export default function Calculators() {
                             </div>
                         )}
                     </div>
-                </div>
 
-                {/* 2. MANUAL CALCULATOR (Existing) */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                        <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                            <Calculator size={20} />
+                    {/* IPC History List */}
+                    <div className="border-t border-slate-100 bg-slate-50 p-5">
+                        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                            Last 12 Months (IPC)
+                        </h4>
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th className="py-2 px-3 text-left font-medium text-slate-500">Month</th>
+                                        <th className="py-2 px-3 text-right font-medium text-slate-500">Monthly %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {ipcHistory.slice(0, 12).map((item, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="py-2 px-3 text-slate-700 capitalize">
+                                                {new Date(item.date).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono font-medium text-slate-900">
+                                                {/* item.value is decimal 0.042 -> 4.2% */}
+                                                {(item.value * 100).toFixed(1)}%
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {ipcHistory.length === 0 && (
+                                        <tr>
+                                            <td colSpan={2} className="py-4 text-center text-slate-400 text-xs">
+                                                Loading historical data...
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900">{t('calculators.rentProjection')}</h3>
-                    </div>
-
-                    <div className="p-6 space-y-8 flex-1 flex flex-col">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('calculators.currentRent')}</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                        <DollarSign size={16} />
-                                    </div>
-                                    <input
-                                        type="number"
-                                        value={currentRent}
-                                        onChange={(e) => setCurrentRent(Number(e.target.value))}
-                                        className="pl-9 w-full rounded-lg border border-slate-300 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                                        placeholder="0"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('calculators.increasePercent')}</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                        <Percent size={16} />
-                                    </div>
-                                    <input
-                                        type="number"
-                                        value={increasePercent}
-                                        onChange={(e) => setIncreasePercent(Number(e.target.value))}
-                                        className="pl-9 w-full rounded-lg border border-slate-300 py-2.5 text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                                        placeholder="0"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 flex items-center justify-between mt-auto">
-                            <div className="space-y-1">
-                                <p className="text-xs uppercase font-bold text-slate-400">{t('calculators.current')}</p>
-                                <p className="text-2xl font-bold text-slate-700">{formatCurrency(currentRent)}</p>
-                            </div>
-
-                            <ArrowRight className="text-slate-300" size={32} />
-
-                            <div className="space-y-1 text-right">
-                                <p className="text-xs uppercase font-bold text-emerald-600">{t('calculators.future')}</p>
-                                <p className="text-3xl font-bold text-emerald-600">{formatCurrency(futureRent)}</p>
-                                <p className="text-xs font-semibold text-emerald-500">+{formatCurrency(difference)}</p>
-                            </div>
-                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 text-right">Source: INDEC (Datos.Gob.Ar) / Fallback</p>
                     </div>
                 </div>
             </div>

@@ -27,16 +27,22 @@ export const fetchIPCData = async () => {
         // Get last 12 months to be safe, but we only need 4 mostly
         return processedData;
     } catch (error) {
-        console.warn("⚠️ API Error. Using fallback data (Oct-Dec 2025).", error);
-
-        // Fallback data (Estimated/Real values for late 2025)
-        // Format: YYYY-MM-DD, Value (as decimal, e.g. 0.027 = 2.7%)
+        // Fallback data (Real INDEC values 2024-2025)
+        // Values are monthly variations (decimals, e.g., 0.042 = 4.2%)
         const fallbackData = [
-            { date: '2025-12-01', value: 0.027 }, // Dec '~2.7%'
-            { date: '2025-11-01', value: 0.029 }, // Nov '~2.9%'
-            { date: '2025-10-01', value: 0.027 }, // Oct '~2.7%'
-            { date: '2025-09-01', value: 0.035 }, // Sep '~3.5%' 
-            { date: '2025-08-01', value: 0.042 }  // Aug '~4.2%'
+            { date: '2025-01-01', value: 0.027 }, // Estimated/Proyection
+            { date: '2024-12-01', value: 0.027 },
+            { date: '2024-11-01', value: 0.029 },
+            { date: '2024-10-01', value: 0.027 },
+            { date: '2024-09-01', value: 0.035 },
+            { date: '2024-08-01', value: 0.042 },
+            { date: '2024-07-01', value: 0.040 },
+            { date: '2024-06-01', value: 0.046 },
+            { date: '2024-05-01', value: 0.042 },
+            { date: '2024-04-01', value: 0.088 },
+            { date: '2024-03-01', value: 0.110 },
+            { date: '2024-02-01', value: 0.132 },
+            { date: '2024-01-01', value: 0.206 }
         ];
         return fallbackData;
     }
