@@ -23,6 +23,7 @@ export default function Calculators() {
     const [rentBase, setRentBase] = useState(1000);
     const [calculationResult, setCalculationResult] = useState(null);
     const [loadingIndices, setLoadingIndices] = useState(false);
+    const [error, setError] = useState(null);
 
     // Fetch Data on Mount
     useEffect(() => {
