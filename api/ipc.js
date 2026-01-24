@@ -7,8 +7,12 @@ export default async function handler(request, response) {
         const data = await res.json();
 
         // Return JSON with CORS headers
-        response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Access-Control-Allow-Origin', '*');
+        // Return JSON with CORS headers (Restricted)
+        const allowedOrigins = ['https://prop-flow-eosin.vercel.app', 'http://localhost:5173'];
+        const origin = request.headers.origin;
+        if (allowedOrigins.includes(origin)) {
+            response.setHeader('Access-Control-Allow-Origin', origin);
+        }
         response.status(200).json(data);
     } catch (error) {
         response.status(500).json({ error: 'Failed to fetch data' });

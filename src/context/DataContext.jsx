@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { addMonths, differenceInDays } from 'date-fns';
@@ -79,8 +79,6 @@ export const DataProvider = ({ children }) => {
             // Remove undefined keys to prevent DB errors
             Object.keys(dbPayload).forEach(key => dbPayload[key] === undefined && delete dbPayload[key]);
 
-            console.log("Adding unit to Supabase:", dbPayload);
-
             const { data, error } = await supabase.from('units').insert([dbPayload]).select();
 
             if (error) {
@@ -153,12 +151,10 @@ export const DataProvider = ({ children }) => {
 
     // --- Expenses ---
     const addExpense = async (expense) => {
-        console.log('📝 Adding expense:', expense);
         const tempId = crypto.randomUUID();
         setExpenses([...expenses, { ...expense, id: tempId, user_id: user.id }]);
 
         try {
-            // Create payload with ONLY database fields (snake_case)
             const payload = {
                 category: expense.category,
                 amount: expense.amount,
@@ -167,15 +163,13 @@ export const DataProvider = ({ children }) => {
                 user_id: user.id,
                 unit_id: expense.unitId
             };
-            console.log('💾 Saving to database:', payload);
 
             const { data, error } = await supabase.from('expenses').insert([payload]).select();
 
             if (error) throw error;
-            console.log('✅ Expense saved:', data[0]);
             setExpenses(prev => prev.map(e => e.id === tempId ? { ...data[0], unitId: data[0].unit_id } : e));
         } catch (err) {
-            console.error("❌ Error adding expense:", err);
+            console.error("Error adding expense:", err);
             setExpenses(prev => prev.filter(e => e.id !== tempId));
         }
     };
@@ -235,8 +229,7 @@ export const DataProvider = ({ children }) => {
                 return;
             }
 
-            console.log(`Migrating ${localUnits.length} units...`);
-
+            // Local migration logic
             let migratedCount = 0;
             for (const unit of localUnits) {
                 // Remove ID to let DB generate new UUID
@@ -260,21 +253,23 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const value = useMemo(() => ({
+        units,
+        expenses,
+        payments,
+        addUnit,
+        updateUnit,
+        deleteUnit,
+        toggleUnitActive,
+        addExpense,
+        deleteExpense,
+        markPaid,
+        migrateLocalData,
+        loading
+    }), [units, expenses, payments, loading, user]);
+
     return (
-        <DataContext.Provider value={{
-            units,
-            expenses,
-            payments,
-            addUnit,
-            updateUnit,
-            deleteUnit,
-            toggleUnitActive,
-            addExpense,
-            deleteExpense,
-            markPaid,
-            migrateLocalData,
-            loading
-        }}>
+        <DataContext.Provider value={value}>
             {children}
         </DataContext.Provider>
     );

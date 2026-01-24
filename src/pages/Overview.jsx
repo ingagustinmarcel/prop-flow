@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useData } from '../context/DataContext';
 import KPICard from '../components/KPICard';
 import { Users, Home, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
@@ -64,6 +64,12 @@ export default function Overview() {
         }
         return data;
     }, [activeUnits, expenses, i18n.language]);
+
+    const currentMonthName = useMemo(() => new Date().toLocaleString(i18n.language, { month: 'long' }), [i18n.language]);
+
+    const handleMarkPaid = useCallback((unitId) => {
+        markPaid(unitId, currentMonth);
+    }, [markPaid, currentMonth]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -174,7 +180,7 @@ export default function Overview() {
                 {/* Unit Status Summary */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">
-                        {t('overview.unitStatus')} (<span className="capitalize">{new Date().toLocaleString(i18n.language, { month: 'long' })}</span>)
+                        {t('overview.unitStatus')} (<span className="capitalize">{currentMonthName}</span>)
                     </h3>
                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
                         {activeUnits.map(unit => {
@@ -194,7 +200,7 @@ export default function Overview() {
                                         </span>
                                     ) : unit.tenant ? (
                                         <button
-                                            onClick={() => markPaid(unit.id, currentMonth)}
+                                            onClick={() => handleMarkPaid(unit.id)}
                                             className="text-xs font-medium bg-slate-900 text-white px-3 py-1.5 rounded-full hover:bg-slate-700 transition"
                                         >
                                             {t('overview.markPaid')}

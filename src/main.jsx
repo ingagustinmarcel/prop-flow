@@ -5,9 +5,7 @@ import './index.css'
 import './lib/i18nConfig'; // Initialize i18n
 import ErrorBoundary from './components/ErrorBoundary';
 
-console.log('Main.jsx executing...');
-// Remove this alert after confirming it works
-// alert('App Starting...');
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

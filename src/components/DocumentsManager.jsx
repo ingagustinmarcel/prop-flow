@@ -36,6 +36,22 @@ export default function DocumentsManager({ unitId }) {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Security: Validate File Type & Size
+        const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            alert('Security Block: Invalid file type. Only PDF and Images are allowed.');
+            e.target.value = '';
+            return;
+        }
+
+        if (file.size > MAX_SIZE) {
+            alert('Security Block: File too large (Max 5MB).');
+            e.target.value = '';
+            return;
+        }
+
         try {
             setUploading(true);
             const fileExt = file.name.split('.').pop();
