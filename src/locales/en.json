@@ -90,7 +90,8 @@
         "automationNote": "Automation Active: Rents will automatically update in the system on the scheduled dates. Tenants should be notified 30 days in advance as per local regulations.",
         "overdue": "Overdue",
         "inDays": "in {{days}} days",
-        "never": "Never"
+        "never": "Never",
+        "noEmailConfigured": "Missing Email"
     },
     "email": {
         "to": "To",

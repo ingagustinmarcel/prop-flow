@@ -128,33 +128,17 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                             <p className="text-sm font-bold text-slate-900">{formatCurrency(unit.rent)}</p>
                         )}
                     </div>
-                    <div className="space-y-1">
-                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 h-full">
-                            <div>
-                                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">{t('units.securityDeposit')}</label>
-                                {isEditing ? (
-                                    <input name="securityDeposit" type="number" value={formData.securityDeposit} onChange={handleChange} className="w-24 text-sm border border-blue-200 rounded px-2 py-1 mt-1" />
-                                ) : (
-                                    <p className="text-sm font-bold text-blue-700 mt-1">{formatCurrency(unit.securityDeposit)}</p>
-                                )}
-                            </div>
+                    <div className="col-span-2">
+                        <div className="flex justify-between items-center bg-blue-50/50 p-2 px-3 rounded-lg border border-blue-100">
+                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">{t('units.securityDeposit')}</span>
+                            {isEditing ? (
+                                <input name="securityDeposit" type="number" value={formData.securityDeposit} onChange={handleChange} className="w-24 text-sm border border-blue-200 rounded px-2 py-0.5 text-right" />
+                            ) : (
+                                <span className="text-sm font-bold text-blue-700">{formatCurrency(unit.securityDeposit)}</span>
+                            )}
                         </div>
                     </div>
-                    <div className="space-y-1">
-                        <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100 h-full">
-                            <div>
-                                <label className="text-xs font-semibold text-emerald-500 uppercase tracking-wider block">{t('units.incrementPercent')}</label>
-                                {isEditing ? (
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <input name="incrementPercentage" type="number" value={formData.incrementPercentage} onChange={handleChange} className="w-16 text-sm border border-emerald-200 rounded px-2 py-1" />
-                                        <span className="text-sm text-emerald-700">%</span>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm font-bold text-emerald-700 mt-1">{unit.incrementPercentage}%</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    {/* Increment Percentage Removed - Automated now */}
                     <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseStart')}</label>
                         {isEditing ? (
@@ -192,7 +176,7 @@ export default function Units() {
             leaseEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
             rent: 1000,
             securityDeposit: 1000,
-            incrementPercentage: 5,
+            incrementPercentage: 0,
             isActive: true
         };
         addUnit(newUnit);

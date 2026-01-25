@@ -90,7 +90,8 @@
         "automationNote": "Automatización Activa: Los alquileres se actualizarán automáticamente en las fechas programadas. Se debe notificar a los inquilinos con 30 días de anticipación según regulaciones locales.",
         "overdue": "Vencido",
         "inDays": "en {{days}} días",
-        "never": "Nunca"
+        "never": "Nunca",
+        "noEmailConfigured": "Falta Email"
     },
     "email": {
         "to": "Para",
