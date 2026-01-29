@@ -9,25 +9,37 @@ const MONTHS = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+import Modal from '../components/Modal';
+
 export default function CalendarPage() {
     const { t } = useTranslation();
-    const { units, payments, markPaid } = useData();
+    const { units, payments, markPaid, updatePayment, deletePayment } = useData();
     const [year, setYear] = useState(new Date().getFullYear());
 
     const getPaymentStatus = (payment, unit) => {
         if (!payment) return 'bg-slate-50 border-dashed border-slate-300';
 
-        const day = new Date(payment.datePaid).getDate();
+        const day = parseInt(payment.datePaid.split('-')[2], 10);
         if (day <= 10) return 'bg-green-100 text-green-700 border-green-200';
         if (day <= 20) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
         return 'bg-red-100 text-red-700 border-red-200';
     };
 
+    // State for Payment Edit Modal
+    const [editPayment, setEditPayment] = useState(null); // { payment: object, unit: object }
+    const [newDate, setNewDate] = useState('');
+
     const handleCellClick = (unitId, monthIndex) => {
         const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
         const existing = payments.find(p => p.unitId === unitId && p.forMonth === monthStr);
+        const unit = units.find(u => u.id === unitId);
 
-        if (!existing) {
+        if (existing) {
+            // Open Edit Modal
+            setEditPayment({ payment: existing, unit });
+            setNewDate(existing.datePaid);
+        } else {
+            // New Payment Flow
             const date = window.prompt(`Enter payment date for ${monthStr} (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
             if (date) {
                 markPaid(unitId, monthStr, date);
@@ -35,8 +47,22 @@ export default function CalendarPage() {
         }
     };
 
+    const handleUpdatePayment = async () => {
+        if (!editPayment?.payment || !newDate) return;
+        await updatePayment(editPayment.payment.id, { datePaid: newDate, amount: editPayment.unit.rent });
+        setEditPayment(null);
+    };
+
+    const handleDeletePayment = async () => {
+        if (!editPayment?.payment) return;
+        if (window.confirm("Are you sure you want to delete this payment record? This action cannot be undone.")) {
+            await deletePayment(editPayment.payment.id);
+            setEditPayment(null);
+        }
+    };
+
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 overflow-x-auto">
+        <div className="space-y-8 animate-in fade-in duration-500 overflow-x-auto pb-12">
             <header className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('calendar.title')}</h1>
@@ -70,7 +96,7 @@ export default function CalendarPage() {
                                 const monthStr = `${year}-${String(idx + 1).padStart(2, '0')}`;
                                 const payment = payments.find(p => p.unitId === unit.id && p.forMonth === monthStr);
                                 const statusClass = getPaymentStatus(payment, unit);
-                                const dayPaid = payment ? new Date(payment.datePaid).getDate() : null;
+                                const dayPaid = payment ? parseInt(payment.datePaid.split('-')[2], 10) : null;
 
                                 return (
                                     <div
@@ -80,22 +106,10 @@ export default function CalendarPage() {
                                     >
                                         <div className={cn("w-full h-full rounded-md flex items-center justify-center text-xs font-bold transition-all border relative", statusClass)}>
                                             {dayPaid ? (
-                                                <>
-                                                    <span className="flex flex-col items-center">
-                                                        <span>{dayPaid}</span>
-                                                        <span className="text-[10px] font-normal opacity-75">{t('overview.paid')}</span>
-                                                    </span>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            generateReceipt(payment, unit);
-                                                        }}
-                                                        className="absolute -top-1 -right-1 bg-white text-emerald-600 rounded-full p-0.5 border border-emerald-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                                                        title={t('calendar.downloadReceipt')}
-                                                    >
-                                                        <Download size={10} />
-                                                    </button>
-                                                </>
+                                                <span className="flex flex-col items-center">
+                                                    <span>{dayPaid}</span>
+                                                    <span className="text-[10px] font-normal opacity-75">{t('overview.paid')}</span>
+                                                </span>
                                             ) : (
                                                 <span className="opacity-0 group-hover:opacity-100 text-slate-400">-</span>
                                             )}
@@ -114,6 +128,55 @@ export default function CalendarPage() {
                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div> {t('calendar.late')}</div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 border border-red-200 rounded"></div> {t('calendar.severe')}</div>
             </div>
+
+            {/* Edit Payment Modal */}
+            <Modal
+                isOpen={!!editPayment}
+                onClose={() => setEditPayment(null)}
+                title={`Manage Payment: ${editPayment?.unit?.name}`}
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-500">
+                        Payment recorded for <strong>{editPayment?.payment?.forMonth}</strong>
+                    </p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Date Paid</label>
+                        <input
+                            type="date"
+                            value={newDate}
+                            onChange={(e) => setNewDate(e.target.value)}
+                            className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                        />
+                    </div>
+
+
+                    <div className="flex gap-3 justify-end pt-4">
+                        <button
+                            onClick={() => {
+                                generateReceipt(editPayment.payment, editPayment.unit);
+                            }}
+                            className="flex-1 mr-auto flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm font-semibold"
+                        >
+                            <Download size={16} />
+                            Receipt
+                        </button>
+
+                        <button
+                            onClick={handleDeletePayment}
+                            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-bold transition-colors"
+                        >
+                            Delete
+                        </button>
+                        <button
+                            onClick={handleUpdatePayment}
+                            className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-bold shadow-sm transition-colors"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

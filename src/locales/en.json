@@ -57,6 +57,8 @@
         "title": "Financial Performance",
         "subtitle": "Cashflow breakdown per unit.",
         "annualProjection": "Annual Projection",
+        "yearToDateSummary": "Year-to-Date Summary",
+        "collectedRevenue": "Collected Revenue",
         "annualRevenue": "Annual Revenue",
         "netProfit": "Net Profit",
         "profitMargin": "Profit Margin",

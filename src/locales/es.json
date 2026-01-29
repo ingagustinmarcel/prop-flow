@@ -57,6 +57,8 @@
         "title": "Rendimiento Financiero",
         "subtitle": "Desglose de flujo de caja por unidad.",
         "annualProjection": "Proyección Anual",
+        "yearToDateSummary": "Resumen Anual a la Fecha",
+        "collectedRevenue": "Ingresos Recaudados",
         "annualRevenue": "Ingresos Anuales",
         "netProfit": "Ganancia Neta",
         "profitMargin": "Margen de Ganancia",
