@@ -62,11 +62,11 @@ export default function CalendarPage() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 overflow-x-auto pb-12">
-            <header className="flex justify-between items-center">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
+            <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('calendar.title')}</h1>
-                    <p className="text-slate-500 mt-2">{t('calendar.subtitle')}</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('calendar.title')}</h1>
+                    <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">{t('calendar.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                     <button onClick={() => setYear(y => y - 1)} className="p-2 hover:bg-slate-50 rounded-full"><ChevronLeft size={20} /></button>

@@ -153,10 +153,10 @@ export default function Cashflow() {
     }, [units, expenses, payments, ipcHistory]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12">
             <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('cashflow.title')}</h1>
-                <p className="text-slate-500 mt-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('cashflow.title')}</h1>
+                <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">
                     {t('cashflow.yearToDateSummary') || `Year-to-Date Summary (${new Date().getFullYear()})`}
                 </p>
             </header>

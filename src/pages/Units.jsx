@@ -188,43 +188,37 @@ export default function Units() {
     });
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="flex justify-between items-center">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
+            <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('units.title')}</h1>
-                    <p className="text-slate-500 mt-2">{t('units.subtitle')}</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('units.title')}</h1>
+                    <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">{t('units.subtitle')}</p>
                 </div>
                 <button
                     onClick={handleAddUnit}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 md:py-2 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 w-full md:w-auto"
                 >
                     <Plus size={20} />
                     {t('units.addUnit')}
                 </button>
             </header>
 
-            <div className="flex items-center justify-between">
-                <p className="text-slate-500">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                <p className="text-slate-500 flex-grow">
                     {t('units.showing')} {filteredUnits.length} {t('units.of')} {units.length} {t('units.unitsLabel')}
                 </p>
-                <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-600">{t('units.showArchived')}</label>
-                    <button
-                        onClick={() => setShowArchived(!showArchived)}
-                        className={cn(
-                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                            showArchived ? "bg-emerald-600" : "bg-slate-200"
-                        )}
-                    >
-                        <span className={cn(
-                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                            showArchived ? "translate-x-6" : "translate-x-1"
-                        )} />
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowArchived(!showArchived)}
+                    className={cn(
+                        "px-4 py-3 sm:py-2 rounded-lg font-medium transition-all text-center",
+                        showArchived ? "bg-slate-200 text-slate-700" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    )}
+                >
+                    {showArchived ? t('units.hideArchived') : t('units.showArchived')}
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filteredUnits.map(unit => (
                     <div key={unit.id} className={cn(!unit.isActive && "opacity-60 grayscale-[0.5]")}>
                         <UnitCard

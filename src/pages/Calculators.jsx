@@ -194,10 +194,10 @@ export default function Calculators() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12">
             <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('calculators.title')}</h1>
-                <p className="text-slate-500 mt-2">{t('calculators.subtitle')}</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('calculators.title')}</h1>
+                <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">{t('calculators.subtitle')}</p>
             </header>
 
             <div className="max-w-4xl mx-auto">

@@ -80,14 +80,10 @@ export default function Increments() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12">
             <header>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('increments.title')}</h1>
-                        <p className="text-slate-500 mt-2">{t('increments.subtitle')}</p>
-                    </div>
-                </div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('increments.title')}</h1>
+                <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">{t('increments.subtitle')}</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
