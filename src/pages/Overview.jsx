@@ -1,5 +1,6 @@
 /**
  * Overview Page - Dashboard with KPIs and Cash Flow Analytics
+ * Fully responsive for mobile, tablet, and desktop
  * 
  * Features:
  * - Real-time KPI cards (units, occupancy, revenue, balance due)
@@ -11,7 +12,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { useData } from '../context/DataContext';
 import KPICard from '../components/KPICard';
-import { Users, Home, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { Users, Home, DollarSign, AlertCircle, CheckCircle, Menu, X } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,12 @@ export default function Overview() {
 
     // Date range filter: 'last12' | 'currentYear' | 'previousYear'
     const [dateRange, setDateRange] = useState('last12');
+
+    // Track which unit is being marked as paid for animation
+    const [payingUnitId, setPayingUnitId] = useState(null);
+
+    // Mobile hamburger menu state for unit status list
+    const [isUnitListOpen, setIsUnitListOpen] = useState(false);
 
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
@@ -115,16 +122,26 @@ export default function Overview() {
         [i18n.language]
     );
 
-    const handleMarkPaid = useCallback((unitId) => {
-        markPaid(unitId, currentMonth);
+    const handleMarkPaid = useCallback(async (unitId) => {
+        // Set paying state for animation
+        setPayingUnitId(unitId);
+
+        // Mark as paid
+        await markPaid(unitId, currentMonth);
+
+        // Keep animation visible for a moment before clearing
+        setTimeout(() => {
+            setPayingUnitId(null);
+        }, 600);
     }, [markPaid, currentMonth]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="flex justify-between items-start">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-6 md:pb-0">
+            {/* Header - Stacked on mobile, side-by-side on desktop */}
+            <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('overview.title')}</h1>
-                    <p className="text-slate-500 mt-2">{t('overview.subtitle')}</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('overview.title')}</h1>
+                    <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">{t('overview.subtitle')}</p>
                 </div>
                 {units.length === 0 && (
                     <button
@@ -133,15 +150,15 @@ export default function Overview() {
                                 useData().migrateLocalData();
                             }
                         }}
-                        className="text-xs font-semibold text-slate-500 underline hover:text-emerald-600"
+                        className="text-xs font-semibold text-slate-500 underline hover:text-emerald-600 self-start md:self-auto"
                     >
                         {t('overview.recoverData')}
                     </button>
                 )}
             </header>
 
-            {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* KPI Grid - 1 column on mobile, 2 on tablet, 4 on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <KPICard
                     title={t('overview.totalUnits')}
                     value={stats.totalUnits}
@@ -174,17 +191,19 @@ export default function Overview() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Chart and Unit Status - Stacked on mobile/tablet, side-by-side on desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* Chart Section */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-slate-800">{t('overview.cashFlowAnalytics')}</h3>
+                <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm">
+                    {/* Chart Header - Stacked on mobile */}
+                    <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-slate-800">{t('overview.cashFlowAnalytics')}</h3>
 
-                        {/* Date Range Dropdown */}
+                        {/* Date Range Dropdown - Full width on mobile */}
                         <select
                             value={dateRange}
                             onChange={(e) => setDateRange(e.target.value)}
-                            className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700 font-medium hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            className="w-full md:w-auto text-sm border border-slate-200 rounded-lg px-3 py-2 md:py-1.5 bg-white text-slate-700 font-medium hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         >
                             <option value="last12">Últimos 12 meses</option>
                             <option value="currentYear">Año actual ({new Date().getFullYear()})</option>
@@ -192,23 +211,23 @@ export default function Overview() {
                         </select>
                     </div>
 
-                    {/* Chart Summary Stats - Show totals for selected period */}
-                    <div className="flex gap-4 text-sm mb-4">
-                        <div className="text-right">
+                    {/* Chart Summary Stats - Responsive layout */}
+                    <div className="flex flex-wrap gap-3 md:gap-4 text-sm mb-4">
+                        <div className="flex-1 min-w-[100px] text-center md:text-right">
                             <p className="text-xs text-slate-400">{t('overview.income')}</p>
-                            <p className="font-bold text-emerald-600">
+                            <p className="font-bold text-emerald-600 text-sm md:text-base">
                                 +{formatCurrency(chartData.reduce((sum, month) => sum + month.Income, 0))}
                             </p>
                         </div>
-                        <div className="text-right">
+                        <div className="flex-1 min-w-[100px] text-center md:text-right">
                             <p className="text-xs text-slate-400">{t('overview.outgoing')}</p>
-                            <p className="font-bold text-rose-500">
+                            <p className="font-bold text-rose-500 text-sm md:text-base">
                                 -{formatCurrency(chartData.reduce((sum, month) => sum + month.Expenses, 0))}
                             </p>
                         </div>
-                        <div className="text-right pl-4 border-l border-slate-100">
+                        <div className="flex-1 min-w-[100px] text-center md:text-right md:pl-4 md:border-l border-slate-100">
                             <p className="text-xs text-slate-400">{t('overview.netPosition')}</p>
-                            <p className={cn("font-bold",
+                            <p className={cn("font-bold text-sm md:text-base",
                                 (chartData.reduce((sum, month) => sum + month.Income, 0) - chartData.reduce((sum, month) => sum + month.Expenses, 0)) >= 0
                                     ? "text-slate-900"
                                     : "text-rose-600"
@@ -221,7 +240,8 @@ export default function Overview() {
                         </div>
                     </div>
 
-                    <div className="h-80 w-full">
+                    {/* Chart - Reduced height on mobile */}
+                    <div className="h-64 md:h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
@@ -234,57 +254,108 @@ export default function Overview() {
                                         <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(val) => `$${val}`} />
+                                {/* Show fewer ticks on mobile */}
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#64748b', fontSize: 11 }}
+                                    dy={10}
+                                    interval="preserveStartEnd"
+                                    className="text-xs md:text-sm"
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#64748b', fontSize: 11 }}
+                                    tickFormatter={(val) => `$${val}`}
+                                    width={50}
+                                />
                                 <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="4 4" />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                                     itemStyle={{ color: '#fff' }}
                                 />
-                                <Area type="monotone" dataKey="Income" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-                                <Area type="monotone" dataKey="Expenses" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorExp)" />
+                                <Area type="monotone" dataKey="Income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
+                                <Area type="monotone" dataKey="Expenses" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorExp)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Unit Status Summary */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">
-                        {t('overview.unitStatus')} (<span className="capitalize">{currentMonthName}</span>)
-                    </h3>
-                    <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
-                        {activeUnits.map(unit => {
-                            // Check payment status
-                            const isPaid = payments.some(p => p.unitId === unit.id && p.forMonth === currentMonth);
+                {/* Unit Status Summary - Hamburger menu on mobile, always visible on desktop */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    {/* Header with hamburger toggle (mobile only) */}
+                    <div className="flex items-center justify-between p-4 md:p-6 md:pb-3">
+                        <h3 className="text-base md:text-lg font-bold text-slate-800">
+                            {t('overview.unitStatus')} (<span className="capitalize">{currentMonthName}</span>)
+                        </h3>
 
-                            return (
-                                <div key={unit.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                    <div>
-                                        <p className="font-semibold text-slate-800">{unit.name}</p>
-                                        <p className="text-xs text-slate-500">{unit.tenant || 'Vacant'}</p>
+                        {/* Hamburger button - visible only on mobile */}
+                        <button
+                            onClick={() => setIsUnitListOpen(!isUnitListOpen)}
+                            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                            aria-label="Toggle unit list"
+                        >
+                            {isUnitListOpen ? (
+                                <X size={20} className="text-slate-600" />
+                            ) : (
+                                <Menu size={20} className="text-slate-600" />
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Unit list - collapsible on mobile, always visible on desktop */}
+                    <div className={cn(
+                        "transition-all duration-300 ease-in-out",
+                        "lg:block", // Always visible on desktop
+                        isUnitListOpen ? "block" : "hidden" // Toggle on mobile
+                    )}>
+                        <div className="px-4 pb-4 md:px-6 md:pb-6 space-y-3 md:space-y-4 max-h-[400px] md:max-h-[340px] overflow-y-auto custom-scrollbar">
+                            {activeUnits.map(unit => {
+                                // Check payment status
+                                const isPaid = payments.some(p => p.unitId === unit.id && p.forMonth === currentMonth);
+
+                                return (
+                                    <div key={unit.id} className="flex items-center justify-between p-3 md:p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                        <div className="flex-1 min-w-0 mr-3">
+                                            <p className="font-semibold text-slate-800 text-sm md:text-base truncate">{unit.name}</p>
+                                            <p className="text-xs text-slate-500 truncate">{unit.tenant || 'Vacant'}</p>
+                                        </div>
+
+                                        <div className="flex flex-col items-end gap-1">
+                                            {isPaid || payingUnitId === unit.id ? (
+                                                <span className={cn(
+                                                    "flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full whitespace-nowrap",
+                                                    payingUnitId === unit.id && "animate-in zoom-in duration-300"
+                                                )}>
+                                                    <CheckCircle size={12} className={payingUnitId === unit.id ? "animate-in spin-in duration-500" : ""} />
+                                                    {t('overview.paid')}
+                                                </span>
+                                            ) : unit.tenant ? (
+                                                <button
+                                                    onClick={() => handleMarkPaid(unit.id)}
+                                                    disabled={payingUnitId !== null}
+                                                    className={cn(
+                                                        "text-xs md:text-xs font-medium bg-slate-900 text-white px-4 py-2 md:px-3 md:py-1.5 rounded-full transition-all whitespace-nowrap min-h-[36px] md:min-h-0",
+                                                        "active:scale-95 active:bg-emerald-600",
+                                                        "hover:bg-slate-700 hover:shadow-lg",
+                                                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    {t('overview.markPaid')}
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">{t('overview.vacant')}</span>
+                                            )}
+                                            {unit.tenant && !isPaid && payingUnitId !== unit.id && (
+                                                <p className="text-[10px] text-slate-400">{formatCurrency(unit.rent)}</p>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    {isPaid ? (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
-                                            <CheckCircle size={12} /> {t('overview.paid')}
-                                        </span>
-                                    ) : unit.tenant ? (
-                                        <button
-                                            onClick={() => handleMarkPaid(unit.id)}
-                                            className="text-xs font-medium bg-slate-900 text-white px-3 py-1.5 rounded-full hover:bg-slate-700 transition"
-                                        >
-                                            {t('overview.markPaid')}
-                                        </button>
-                                    ) : (
-                                        <span className="text-xs text-slate-400 italic">{t('overview.vacant')}</span>
-                                    )}
-                                    {unit.tenant && !isPaid && (
-                                        <p className="text-[10px] text-slate-400 text-center mt-1">{formatCurrency(unit.rent)}</p>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
