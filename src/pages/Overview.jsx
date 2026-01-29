@@ -1,4 +1,14 @@
-import React, { useMemo, useCallback } from 'react';
+/**
+ * Overview Page - Dashboard with KPIs and Cash Flow Analytics
+ * 
+ * Features:
+ * - Real-time KPI cards (units, occupancy, revenue, balance due)
+ * - Cash flow chart with configurable date ranges
+ * - Unit payment status tracking
+ * - Quick payment marking
+ */
+
+import React, { useMemo, useCallback, useState } from 'react';
 import { useData } from '../context/DataContext';
 import KPICard from '../components/KPICard';
 import { Users, Home, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
@@ -10,8 +20,10 @@ export default function Overview() {
     const { t, i18n } = useTranslation();
     const { units, payments, expenses, markPaid } = useData();
 
+    // Date range filter: 'last12' | 'currentYear' | 'previousYear'
+    const [dateRange, setDateRange] = useState('last12');
+
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const today = new Date();
 
     const activeUnits = useMemo(() => units.filter(u => u.isActive), [units]);
 
@@ -37,19 +49,51 @@ export default function Overview() {
         return { totalUnits, occupancyRate, monthlyRevenue, balanceDue };
     }, [activeUnits, payments, currentMonth]);
 
-    // Chart Data Preparation - Using REAL expense data
+    /**
+     * Chart Data Preparation
+     * Generates monthly income and expense data based on selected date range
+     * Income = ACTUAL payments received (not projected)
+     * Expenses = ACTUAL expenses recorded
+     */
     const chartData = useMemo(() => {
         const data = [];
-        for (let i = 11; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            const monthStr = d.toISOString().slice(0, 7); // YYYY-MM format
-            const monthLabel = d.toLocaleString(i18n.language, { month: 'short' });
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
 
-            // Calculate REAL income for this month
-            const monthIncome = activeUnits.reduce((sum, unit) => {
-                return sum + (unit.tenant ? Number(unit.rent) : 0);
-            }, 0);
+        let startDate, monthsToShow;
+
+        // Determine date range based on filter
+        if (dateRange === 'last12') {
+            // Last 12 months from today
+            monthsToShow = 12;
+            startDate = new Date(currentDate);
+            startDate.setMonth(startDate.getMonth() - 11);
+            startDate.setDate(1);
+        } else if (dateRange === 'currentYear') {
+            // January to December of current year
+            startDate = new Date(currentYear, 0, 1);
+            monthsToShow = 12;
+        } else if (dateRange === 'previousYear') {
+            // January to December of previous year
+            startDate = new Date(currentYear - 1, 0, 1);
+            monthsToShow = 12;
+        }
+
+        // Generate data for each month
+        for (let i = 0; i < monthsToShow; i++) {
+            const monthDate = new Date(startDate);
+            monthDate.setMonth(startDate.getMonth() + i);
+
+            const monthStr = monthDate.toISOString().slice(0, 7); // YYYY-MM
+
+            // Get localized month name with first letter capitalized
+            const monthLabel = monthDate.toLocaleString(i18n.language, { month: 'short' });
+            const capitalizedMonth = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+            // Calculate REAL income for this month (actual payments received)
+            const monthIncome = payments
+                .filter(p => p.forMonth === monthStr)
+                .reduce((sum, p) => sum + Number(p.amount), 0);
 
             // Calculate REAL expenses for this month
             const monthExpenses = expenses
@@ -57,15 +101,19 @@ export default function Overview() {
                 .reduce((sum, e) => sum + Number(e.amount), 0);
 
             data.push({
-                name: monthLabel,
+                name: capitalizedMonth,
                 Income: Math.round(monthIncome),
                 Expenses: Math.round(monthExpenses)
             });
         }
-        return data;
-    }, [activeUnits, expenses, i18n.language]);
 
-    const currentMonthName = useMemo(() => new Date().toLocaleString(i18n.language, { month: 'long' }), [i18n.language]);
+        return data;
+    }, [payments, expenses, i18n.language, dateRange]);
+
+    const currentMonthName = useMemo(() =>
+        new Date().toLocaleString(i18n.language, { month: 'long' }),
+        [i18n.language]
+    );
 
     const handleMarkPaid = useCallback((unitId) => {
         markPaid(unitId, currentMonth);
@@ -132,24 +180,47 @@ export default function Overview() {
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold text-slate-800">{t('overview.cashFlowAnalytics')}</h3>
 
-                        {/* Chart Summary Stats */}
-                        <div className="flex gap-4 text-sm">
-                            <div className="text-right">
-                                <p className="text-xs text-slate-400">{t('overview.income')}</p>
-                                <p className="font-bold text-emerald-600">+{formatCurrency(chartData[chartData.length - 1].Income)}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs text-slate-400">{t('overview.outgoing')}</p>
-                                <p className="font-bold text-rose-500">-{formatCurrency(chartData[chartData.length - 1].Expenses)}</p>
-                            </div>
-                            <div className="text-right pl-4 border-l border-slate-100">
-                                <p className="text-xs text-slate-400">{t('overview.netPosition')}</p>
-                                <p className={cn("font-bold", (chartData[chartData.length - 1].Income - chartData[chartData.length - 1].Expenses) >= 0 ? "text-slate-900" : "text-rose-600")}>
-                                    {formatCurrency(chartData[chartData.length - 1].Income - chartData[chartData.length - 1].Expenses)}
-                                </p>
-                            </div>
+                        {/* Date Range Dropdown */}
+                        <select
+                            value={dateRange}
+                            onChange={(e) => setDateRange(e.target.value)}
+                            className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700 font-medium hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        >
+                            <option value="last12">Últimos 12 meses</option>
+                            <option value="currentYear">Año actual ({new Date().getFullYear()})</option>
+                            <option value="previousYear">Año anterior ({new Date().getFullYear() - 1})</option>
+                        </select>
+                    </div>
+
+                    {/* Chart Summary Stats - Show totals for selected period */}
+                    <div className="flex gap-4 text-sm mb-4">
+                        <div className="text-right">
+                            <p className="text-xs text-slate-400">{t('overview.income')}</p>
+                            <p className="font-bold text-emerald-600">
+                                +{formatCurrency(chartData.reduce((sum, month) => sum + month.Income, 0))}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-slate-400">{t('overview.outgoing')}</p>
+                            <p className="font-bold text-rose-500">
+                                -{formatCurrency(chartData.reduce((sum, month) => sum + month.Expenses, 0))}
+                            </p>
+                        </div>
+                        <div className="text-right pl-4 border-l border-slate-100">
+                            <p className="text-xs text-slate-400">{t('overview.netPosition')}</p>
+                            <p className={cn("font-bold",
+                                (chartData.reduce((sum, month) => sum + month.Income, 0) - chartData.reduce((sum, month) => sum + month.Expenses, 0)) >= 0
+                                    ? "text-slate-900"
+                                    : "text-rose-600"
+                            )}>
+                                {formatCurrency(
+                                    chartData.reduce((sum, month) => sum + month.Income, 0) -
+                                    chartData.reduce((sum, month) => sum + month.Expenses, 0)
+                                )}
+                            </p>
                         </div>
                     </div>
+
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
