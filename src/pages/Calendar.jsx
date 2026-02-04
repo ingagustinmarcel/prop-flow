@@ -4,19 +4,21 @@ import { useData } from '../context/DataContext';
 import { cn } from '../lib/utils';
 import { ChevronRight, ChevronLeft, Download } from 'lucide-react';
 import { generateReceipt } from '../lib/receiptService';
+import Modal from '../components/Modal';
 
 const MONTHS = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-import Modal from '../components/Modal';
-
 export default function CalendarPage() {
     const { t } = useTranslation();
     const { units, payments, markPaid, updatePayment, deletePayment } = useData();
+    const [activeMonth, setActiveMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
+    const [editPayment, setEditPayment] = useState(null);
+    const [newDate, setNewDate] = useState('');
 
-    const getPaymentStatus = (payment, unit) => {
+    const getPaymentStatus = (payment) => {
         if (!payment) return 'bg-slate-50 border-dashed border-slate-300';
 
         const day = parseInt(payment.datePaid.split('-')[2], 10);
@@ -25,21 +27,15 @@ export default function CalendarPage() {
         return 'bg-red-100 text-red-700 border-red-200';
     };
 
-    // State for Payment Edit Modal
-    const [editPayment, setEditPayment] = useState(null); // { payment: object, unit: object }
-    const [newDate, setNewDate] = useState('');
-
     const handleCellClick = (unitId, monthIndex) => {
         const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
         const existing = payments.find(p => p.unitId === unitId && p.forMonth === monthStr);
         const unit = units.find(u => u.id === unitId);
 
         if (existing) {
-            // Open Edit Modal
             setEditPayment({ payment: existing, unit });
             setNewDate(existing.datePaid);
         } else {
-            // New Payment Flow
             const date = window.prompt(`Enter payment date for ${monthStr} (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
             if (date) {
                 markPaid(unitId, monthStr, date);
@@ -75,8 +71,55 @@ export default function CalendarPage() {
                 </div>
             </header>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-w-[1000px]">
-                {/* Header Row */}
+            {/* Mobile View: Month Selector & List */}
+            <div className="md:hidden space-y-4">
+                <div className="flex overflow-x-auto pb-2 gap-2 hide-scrollbar">
+                    {MONTHS.map((m, idx) => (
+                        <button
+                            key={m}
+                            onClick={() => setActiveMonth(idx)}
+                            className={cn(
+                                "px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors",
+                                activeMonth === idx
+                                    ? "bg-slate-900 text-white shadow-md"
+                                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                            )}
+                        >
+                            {m}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-3">
+                    {units.map(unit => {
+                        const monthStr = `${year}-${String(activeMonth + 1).padStart(2, '0')}`;
+                        const payment = payments.find(p => p.unitId === unit.id && p.forMonth === monthStr);
+                        const statusClass = getPaymentStatus(payment);
+                        const dayPaid = payment ? parseInt(payment.datePaid.split('-')[2], 10) : null;
+
+                        return (
+                            <div
+                                key={unit.id}
+                                onClick={() => handleCellClick(unit.id, activeMonth)}
+                                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-bold text-slate-900">{unit.name}</h3>
+                                        <p className="text-sm text-slate-500">{unit.tenant}</p>
+                                    </div>
+                                    <div className={cn("px-3 py-1 rounded-md text-xs font-bold border", statusClass)}>
+                                        {dayPaid ? `Paid: ${dayPaid}` : 'Pending'}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Desktop View: Full Grid */}
+            <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-w-[1000px]">
                 <div className="grid grid-cols-[200px_repeat(12,1fr)] bg-slate-50 border-b border-slate-200">
                     <div className="p-4 font-bold text-slate-700">{t('calendar.unit')}</div>
                     {MONTHS.map(m => (
@@ -84,7 +127,6 @@ export default function CalendarPage() {
                     ))}
                 </div>
 
-                {/* Rows */}
                 <div className="divide-y divide-slate-100">
                     {units.map(unit => (
                         <div key={unit.id} className="grid grid-cols-[200px_repeat(12,1fr)] hover:bg-slate-50/50 transition-colors">
@@ -95,7 +137,7 @@ export default function CalendarPage() {
                             {MONTHS.map((_, idx) => {
                                 const monthStr = `${year}-${String(idx + 1).padStart(2, '0')}`;
                                 const payment = payments.find(p => p.unitId === unit.id && p.forMonth === monthStr);
-                                const statusClass = getPaymentStatus(payment, unit);
+                                const statusClass = getPaymentStatus(payment);
                                 const dayPaid = payment ? parseInt(payment.datePaid.split('-')[2], 10) : null;
 
                                 return (
@@ -123,7 +165,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-6 justify-end text-sm text-slate-600">
+            <div className="hidden md:flex gap-6 justify-end text-sm text-slate-600">
                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div> {t('calendar.onTime')}</div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div> {t('calendar.late')}</div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 border border-red-200 rounded"></div> {t('calendar.severe')}</div>
@@ -149,7 +191,6 @@ export default function CalendarPage() {
                             className="w-full p-2 border border-slate-200 rounded-lg text-sm"
                         />
                     </div>
-
 
                     <div className="flex gap-3 justify-end pt-4">
                         <button

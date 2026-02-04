@@ -12,13 +12,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Building2, DollarSign, Calendar, TrendingUp, Calculator } from 'lucide-react';
+import { Menu, X, Home, Building2, DollarSign, Calendar, TrendingUp, Calculator, Globe, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 export default function MobileNav() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { signOut } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [currentLang, setCurrentLang] = useState(i18n.language);
     const location = useLocation();
 
     // Close menu when route changes
@@ -46,6 +49,12 @@ export default function MobileNav() {
         { path: '/increments', icon: TrendingUp, label: t('nav.increments') || 'Rent Increments' },
         { path: '/calculators', icon: Calculator, label: t('nav.calculators') || 'Calculators' },
     ];
+
+    const toggleLanguage = () => {
+        const newLang = currentLang === 'en' ? 'es' : 'en';
+        i18n.changeLanguage(newLang);
+        setCurrentLang(newLang);
+    };
 
     return (
         <>
@@ -110,10 +119,28 @@ export default function MobileNav() {
                     })}
                 </div>
 
+                {/* Language & Logout Buttons */}
+                <div className="px-4 py-3 space-y-2 border-t border-slate-200">
+                    <button
+                        onClick={toggleLanguage}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium text-slate-700"
+                    >
+                        <Globe size={16} />
+                        <span>{currentLang === 'en' ? 'Español' : 'English'}</span>
+                    </button>
+                    <button
+                        onClick={signOut}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
+                    >
+                        <LogOut size={16} />
+                        <span>{t('sidebar.logout')}</span>
+                    </button>
+                </div>
+
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200">
                     <p className="text-xs text-slate-400 text-center">
-                        PropFlow v0.3.0
+                        PropFlow v1.0.0
                     </p>
                 </div>
             </nav>
