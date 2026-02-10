@@ -1,14 +1,3 @@
-/**
- * Overview Page - Dashboard with KPIs and Cash Flow Analytics
- * Fully responsive for mobile, tablet, and desktop
- * 
- * Features:
- * - Real-time KPI cards (units, occupancy, revenue, balance due)
- * - Cash flow chart with configurable date ranges
- * - Unit payment status tracking
- * - Quick payment marking
- */
-
 import React, { useMemo, useCallback, useState } from 'react';
 import { useData } from '../context/DataContext';
 import KPICard from '../components/KPICard';
@@ -19,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function Overview() {
     const { t, i18n } = useTranslation();
-    const { units, payments, expenses, markPaid } = useData();
+    const { units, payments, expenses, markPaid, getActiveLease } = useData();
 
     // Date range filter: 'last12' | 'currentYear' | 'previousYear'
     const [dateRange, setDateRange] = useState('last12');
@@ -36,25 +25,35 @@ export default function Overview() {
 
     const stats = useMemo(() => {
         const totalUnits = activeUnits.length;
-        const occupiedUnits = activeUnits.filter(u => u.tenant).length;
-        const occupancyRate = totalUnits ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
-        // Projected Monthly Revenue
-        const monthlyRevenue = activeUnits.reduce((sum, unit) => sum + (unit.tenant ? Number(unit.rent) : 0), 0);
+        // Calculate stats based on active leases (with legacy fallback)
+        let occupiedCount = 0;
+        let revenue = 0;
+        let balance = 0;
 
-        // Balance Due (Current Month)
         const paidUnitIds = new Set(payments
             .filter(p => p.forMonth === currentMonth)
             .map(p => p.unitId));
 
-        const balanceDue = activeUnits.reduce((sum, unit) => {
-            if (!unit.tenant) return sum;
-            if (!paidUnitIds.has(unit.id)) return sum + Number(unit.rent);
-            return sum;
-        }, 0);
+        activeUnits.forEach(unit => {
+            const lease = getActiveLease(unit.id);
+            const isOccupied = lease ? true : !!unit.tenant;
+            const rent = lease ? Number(lease.rentAmount) : Number(unit.rent || 0);
 
-        return { totalUnits, occupancyRate, monthlyRevenue, balanceDue };
-    }, [activeUnits, payments, currentMonth]);
+            if (isOccupied) {
+                occupiedCount++;
+                revenue += rent;
+
+                if (!paidUnitIds.has(unit.id)) {
+                    balance += rent;
+                }
+            }
+        });
+
+        const occupancyRate = totalUnits ? Math.round((occupiedCount / totalUnits) * 100) : 0;
+
+        return { totalUnits, occupancyRate, monthlyRevenue: revenue, balanceDue: balance };
+    }, [activeUnits, payments, currentMonth, getActiveLease]);
 
     /**
      * Chart Data Preparation
@@ -313,6 +312,11 @@ export default function Overview() {
                     )}>
                         <div className="px-4 pb-4 md:px-6 md:pb-6 space-y-3 md:space-y-4 max-h-[400px] md:max-h-[340px] overflow-y-auto custom-scrollbar">
                             {activeUnits.map(unit => {
+                                const lease = getActiveLease(unit.id);
+                                const isOccupied = lease ? true : !!unit.tenant;
+                                const tenantName = lease ? lease.tenantName : (unit.tenant || 'Vacant');
+                                const rentAmount = lease ? Number(lease.rentAmount) : Number(unit.rent || 0);
+
                                 // Check payment status
                                 const isPaid = payments.some(p => p.unitId === unit.id && p.forMonth === currentMonth);
 
@@ -320,7 +324,7 @@ export default function Overview() {
                                     <div key={unit.id} className="flex items-center justify-between p-3 md:p-3 bg-slate-50 rounded-lg border border-slate-100">
                                         <div className="flex-1 min-w-0 mr-3">
                                             <p className="font-semibold text-slate-800 text-sm md:text-base truncate">{unit.name}</p>
-                                            <p className="text-xs text-slate-500 truncate">{unit.tenant || 'Vacant'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{tenantName}</p>
                                         </div>
 
                                         <div className="flex flex-col items-end gap-1">
@@ -332,7 +336,7 @@ export default function Overview() {
                                                     <CheckCircle size={12} className={payingUnitId === unit.id ? "animate-in spin-in duration-500" : ""} />
                                                     {t('overview.paid')}
                                                 </span>
-                                            ) : unit.tenant ? (
+                                            ) : isOccupied ? (
                                                 <button
                                                     onClick={() => handleMarkPaid(unit.id)}
                                                     disabled={payingUnitId !== null}
@@ -348,8 +352,8 @@ export default function Overview() {
                                             ) : (
                                                 <span className="text-xs text-slate-400 italic">{t('overview.vacant')}</span>
                                             )}
-                                            {unit.tenant && !isPaid && payingUnitId !== unit.id && (
-                                                <p className="text-[10px] text-slate-400">{formatCurrency(unit.rent)}</p>
+                                            {isOccupied && !isPaid && payingUnitId !== unit.id && (
+                                                <p className="text-[10px] text-slate-400">{formatCurrency(rentAmount)}</p>
                                             )}
                                         </div>
                                     </div>

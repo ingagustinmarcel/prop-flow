@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
-import DocumentsManager from '../components/DocumentsManager';
+import LeaseModal from '../components/LeaseModal';
 import ExpenseModal from '../components/ExpenseModal';
-import { Edit2, Check, Plus, Trash2, Home, FileText, DollarSign, X } from 'lucide-react';
+import { Edit2, Check, Plus, Trash2, Home, DollarSign, X, UserMinus, FilePlus, AlertTriangle, ChevronDown } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 
-const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
+const UnitCard = ({ unit, activeLease, allLeases = [], onSave, onDelete, onAddExpense, onAddLease, onEditLease, onTerminateLease }) => {
     const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({ ...unit });
+    const [showHistory, setShowHistory] = useState(false);
+    // We only edit Unit Name here. Tenant details are immutable or via new lease.
+    const [formData, setFormData] = useState({ name: unit.name });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -23,15 +25,29 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
     };
 
     const handleCancel = () => {
-        setFormData({ ...unit });
+        setFormData({ name: unit.name });
         setIsEditing(false);
     };
+
+    // Fallback for legacy data (if no lease record but unit has tenant)
+    const effectiveTenant = activeLease?.tenantName || unit.tenant;
+    const effectiveRent = activeLease?.rentAmount || unit.rent;
+    const effectiveDeposit = activeLease?.securityDeposit || unit.securityDeposit;
+    const effectiveStart = activeLease?.startDate || unit.leaseStart;
+    const effectiveEnd = activeLease?.endDate || unit.leaseEnd;
+    const isOccupied = !!effectiveTenant;
+
+    // Filter terminated leases for this unit
+    const terminatedLeases = allLeases.filter(l => l.status === 'TERMINATED').sort((a, b) => {
+        // Sort by end date descending (most recent first)
+        return new Date(b.endDate) - new Date(a.endDate);
+    });
 
     return (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
             <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                    <div className={cn("p-2 rounded-lg", isOccupied ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500")}>
                         <Home size={20} />
                     </div>
                     {isEditing ? (
@@ -42,7 +58,12 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                             className="text-lg font-bold text-slate-900 bg-white border border-slate-300 rounded px-2 py-0.5 w-32 focus:ring-2 focus:ring-emerald-500 outline-none"
                         />
                     ) : (
-                        <h3 className="text-lg font-bold text-slate-900">{unit.name}</h3>
+                        <div className="flex flex-col">
+                            <h3 className="text-lg font-bold text-slate-900 leading-tight">{unit.name}</h3>
+                            <span className={cn("text-xs font-medium uppercase tracking-wider", isOccupied ? "text-emerald-600" : "text-slate-400")}>
+                                {isOccupied ? t('units.occupied') : t('units.vacant')}
+                            </span>
+                        </div>
                     )}
                 </div>
 
@@ -53,13 +74,6 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                         title={t('units.addExpense')}
                     >
                         <DollarSign size={18} />
-                    </button>
-                    <button
-                        onClick={() => onOpenDocs(unit)}
-                        className="p-2 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-colors"
-                        title={t('units.manageDocuments')}
-                    >
-                        <FileText size={18} />
                     </button>
                     {isEditing ? (
                         <>
@@ -87,7 +101,7 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
                                 <Edit2 size={18} />
                             </button>
                             <button
-                                onClick={() => window.confirm(`Delete ${unit.name}?`) && onDelete(unit.id)}
+                                onClick={() => onDelete(unit)}
                                 className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
                                 title={t('units.deleteOrArchive')}
                             >
@@ -99,63 +113,116 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
             </div>
 
             <div className="p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.tenant')}</label>
-                        {isEditing ? (
-                            <input name="tenant" value={formData.tenant} onChange={handleChange} className="w-full text-sm border rounded px-2 py-1" />
-                        ) : (
-                            <p className="text-sm font-medium text-slate-700">{unit.tenant || t('units.vacant')}</p>
-                        )}
-                        {/* Tenant Email */}
-                        {isEditing ? (
-                            <input
-                                name="tenantEmail"
-                                value={formData.tenantEmail || ''}
-                                onChange={handleChange}
-                                placeholder="email@example.com"
-                                className="w-full text-xs border rounded px-2 py-1 mt-1 text-slate-500"
-                            />
-                        ) : unit.tenantEmail && (
-                            <p className="text-xs text-slate-400 mt-1">{unit.tenantEmail}</p>
-                        )}
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.rentPerMonth')}</label>
-                        {isEditing ? (
-                            <input name="rent" type="number" value={formData.rent} onChange={handleChange} className="w-full text-sm border rounded px-2 py-1" />
-                        ) : (
-                            <p className="text-sm font-bold text-slate-900">{formatCurrency(unit.rent)}</p>
-                        )}
-                    </div>
-                    <div className="col-span-2">
-                        <div className="flex justify-between items-center bg-blue-50/50 p-2 px-3 rounded-lg border border-blue-100">
-                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">{t('units.securityDeposit')}</span>
-                            {isEditing ? (
-                                <input name="securityDeposit" type="number" value={formData.securityDeposit} onChange={handleChange} className="w-24 text-sm border border-blue-200 rounded px-2 py-0.5 text-right" />
-                            ) : (
-                                <span className="text-sm font-bold text-blue-700">{formatCurrency(unit.securityDeposit)}</span>
+                {isOccupied ? (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.tenant')}</label>
+                            <p className="text-sm font-medium text-slate-700 truncate" title={effectiveTenant}>{effectiveTenant}</p>
+                            {/* Email removed from view for simplicity, can add back if needed */}
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.rentPerMonth')}</label>
+                            <p className="text-sm font-bold text-slate-900">{formatCurrency(effectiveRent)}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <div className="flex justify-between items-center bg-blue-50/50 p-2 px-3 rounded-lg border border-blue-100">
+                                <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">{t('units.securityDeposit')}</span>
+                                <span className="text-sm font-bold text-blue-700">{formatCurrency(effectiveDeposit)}</span>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseStart')}</label>
+                            <p className="text-sm text-slate-600">{effectiveStart}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseEnd')}</label>
+                            <p className="text-sm text-slate-600">{effectiveEnd}</p>
+                        </div>
+
+                        {/* Lease Actions */}
+                        <div className="col-span-2 pt-2 border-t border-slate-100 mt-1">
+                            {activeLease && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => onEditLease(unit, activeLease)}
+                                        className="flex-1 py-2 flex items-center justify-center gap-2 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
+                                    >
+                                        <Edit2 size={14} />
+                                        {t('units.editLease')}
+                                    </button>
+                                    <button
+                                        onClick={() => onTerminateLease(activeLease)}
+                                        className="flex-1 py-2 flex items-center justify-center gap-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                                    >
+                                        <UserMinus size={14} />
+                                        {t('units.terminateLease')}
+                                    </button>
+                                </div>
+                            )}
+                            {!activeLease && unit.tenant && (
+                                <p className="text-xs text-center text-amber-600 italic flex items-center justify-center gap-1">
+                                    <AlertTriangle size={12} />
+                                    Legacy Data - Migrate to enable Lease actions
+                                </p>
                             )}
                         </div>
-                    </div>
-                    {/* Increment Percentage Removed - Automated now */}
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseStart')}</label>
-                        {isEditing ? (
-                            <input name="leaseStart" type="date" value={formData.leaseStart} onChange={handleChange} className="w-full text-xs border rounded px-1 py-1" />
-                        ) : (
-                            <p className="text-sm text-slate-600">{unit.leaseStart}</p>
+
+                        {/* Lease History Section - Dropdown */}
+                        {terminatedLeases.length > 0 && (
+                            <div className="col-span-2 pt-3 border-t border-slate-100 mt-2">
+                                <button
+                                    onClick={() => setShowHistory(!showHistory)}
+                                    className="w-full py-2 flex items-center justify-between text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-wider"
+                                >
+                                    <span>{t('units.leaseHistory')} ({terminatedLeases.length})</span>
+                                    <ChevronDown
+                                        size={16}
+                                        className={cn("transition-transform duration-200", showHistory && "rotate-180")}
+                                    />
+                                </button>
+
+                                {showHistory && (
+                                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                                        {terminatedLeases.map((lease) => (
+                                            <div
+                                                key={lease.id}
+                                                className="p-2 bg-slate-50 rounded border border-slate-200 text-xs"
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-medium text-slate-700">{lease.tenantName}</span>
+                                                    <span className="text-emerald-600 font-semibold">{formatCurrency(lease.rentAmount)}</span>
+                                                </div>
+                                                <div className="text-slate-500 space-y-0.5">
+                                                    <div>{lease.startDate} → {lease.endDate}</div>
+                                                    <div className="text-red-600">
+                                                        {t('units.terminatedOn')}: {lease.endDate}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('units.leaseEnd')}</label>
-                        {isEditing ? (
-                            <input name="leaseEnd" type="date" value={formData.leaseEnd} onChange={handleChange} className="w-full text-xs border rounded px-1 py-1" />
-                        ) : (
-                            <p className="text-sm text-slate-600">{unit.leaseEnd}</p>
-                        )}
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+                        <div className="p-3 bg-slate-50 rounded-full">
+                            <Home size={24} className="text-slate-300" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">{t('units.unitVacant')}</p>
+                            <p className="text-xs text-slate-400 mt-1">{t('units.readyForTenant')}</p>
+                        </div>
+                        <button
+                            onClick={() => onAddLease(unit)}
+                            className="mt-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                        >
+                            <FilePlus size={16} />
+                            {t('units.addLease')}
+                        </button>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
@@ -163,23 +230,63 @@ const UnitCard = ({ unit, onSave, onOpenDocs, onDelete, onAddExpense }) => {
 
 export default function Units() {
     const { t } = useTranslation();
-    const { units, addUnit, updateUnit, deleteUnit, toggleUnitActive, addExpense } = useData();
-    const [selectedUnit, setSelectedUnit] = useState(null);
+    const { units, leases, getActiveLease, addUnit, updateUnit, deleteUnit, toggleUnitActive, addExpense, terminateLease, addLease, updateLease } = useData();
     const [showArchived, setShowArchived] = useState(false);
     const [expenseModalUnit, setExpenseModalUnit] = useState(null);
+    const [leaseModalUnit, setLeaseModalUnit] = useState(null);
+    const [leaseModalMode, setLeaseModalMode] = useState('add'); // 'add' or 'edit'
+    const [editingLease, setEditingLease] = useState(null);
+
+    // Termination Modal State
+    const [terminationLease, setTerminationLease] = useState(null);
+
+    // Delete Confirmation Modal State
+    const [deleteConfirmUnit, setDeleteConfirmUnit] = useState(null);
 
     const handleAddUnit = () => {
         const newUnit = {
             name: `Unit ${units.length + 101}`,
-            tenant: '',
-            leaseStart: new Date().toISOString().split('T')[0],
-            leaseEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-            rent: 1000,
-            securityDeposit: 1000,
-            incrementPercentage: 0,
+            // Legacy fields no longer used for new units
             isActive: true
         };
         addUnit(newUnit);
+    };
+
+    const handleTerminateConfirm = async () => {
+        if (terminationLease) {
+            await terminateLease(terminationLease.id);
+            setTerminationLease(null);
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (deleteConfirmUnit) {
+            console.log('🗑️ Confirming delete for unit:', deleteConfirmUnit.id);
+            await deleteUnit(deleteConfirmUnit.id);
+            setDeleteConfirmUnit(null);
+        }
+    };
+
+    const handleAddLeaseClick = (unit) => {
+        setLeaseModalUnit(unit);
+        setLeaseModalMode('add');
+        setEditingLease(null);
+    };
+
+    const handleEditLeaseClick = (unit, lease) => {
+        setLeaseModalUnit(unit);
+        setLeaseModalMode('edit');
+        setEditingLease(lease);
+    };
+
+    const handleLeaseSave = async (leaseData) => {
+        if (leaseModalMode === 'add') {
+            await addLease(leaseData);
+        } else if (leaseModalMode === 'edit' && editingLease) {
+            await updateLease(editingLease.id, leaseData);
+        }
+        setLeaseModalUnit(null);
+        setEditingLease(null);
     };
 
     const filteredUnits = units.filter(u => {
@@ -214,7 +321,7 @@ export default function Units() {
                         showArchived ? "bg-slate-200 text-slate-700" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                     )}
                 >
-                    {showArchived ? t('units.hideArchived') : t('units.showArchived')}
+                    {t(showArchived ? 'units.hideArchived' : 'units.showArchived')}
                 </button>
             </div>
 
@@ -223,10 +330,14 @@ export default function Units() {
                     <div key={unit.id} className={cn(!unit.isActive && "opacity-60 grayscale-[0.5]")}>
                         <UnitCard
                             unit={unit}
+                            activeLease={getActiveLease(unit.id)}
+                            allLeases={leases.filter(l => l.unitId === unit.id)}
                             onSave={updateUnit}
-                            onOpenDocs={setSelectedUnit}
-                            onDelete={deleteUnit}
+                            onDelete={setDeleteConfirmUnit}
                             onAddExpense={setExpenseModalUnit}
+                            onAddLease={handleAddLeaseClick}
+                            onEditLease={handleEditLeaseClick}
+                            onTerminateLease={setTerminationLease}
                         />
                         {!unit.isActive && (
                             <button
@@ -240,14 +351,6 @@ export default function Units() {
                 ))}
             </div>
 
-            <Modal
-                isOpen={!!selectedUnit}
-                onClose={() => setSelectedUnit(null)}
-                title={`${t('units.documents')}: ${selectedUnit?.name}`}
-            >
-                {selectedUnit && <DocumentsManager unitId={selectedUnit.id} />}
-            </Modal>
-
             <ExpenseModal
                 isOpen={!!expenseModalUnit}
                 onClose={() => setExpenseModalUnit(null)}
@@ -255,6 +358,87 @@ export default function Units() {
                 unitName={expenseModalUnit?.name}
                 onSave={addExpense}
             />
+
+            <LeaseModal
+                isOpen={!!leaseModalUnit}
+                onClose={() => { setLeaseModalUnit(null); setEditingLease(null); }}
+                unitId={leaseModalUnit?.id}
+                unitName={leaseModalUnit?.name}
+                mode={leaseModalMode}
+                lease={editingLease}
+                onSave={handleLeaseSave}
+            />
+
+            {/* Termination Confirmation Modal */}
+            <Modal
+                isOpen={!!terminationLease}
+                onClose={() => setTerminationLease(null)}
+                title={t('units.confirmTermination')}
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg flex gap-3">
+                        <AlertTriangle className="text-red-600 shrink-0" size={24} />
+                        <div>
+                            <h4 className="font-bold text-red-900">{t('units.warning')}</h4>
+                            <p className="text-sm text-red-700 mt-1">
+                                {t('units.terminationWarningMessage')}
+                            </p>
+                        </div>
+                    </div>
+                    <p className="text-slate-600">
+                        {t('units.terminationConfirmText', { tenant: terminationLease?.tenantName })}
+                    </p>
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button
+                            onClick={() => setTerminationLease(null)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            onClick={handleTerminateConfirm}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+                        >
+                            {t('units.confirmTermination')}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteConfirmUnit}
+                onClose={() => setDeleteConfirmUnit(null)}
+                title={t('units.deleteOrArchive')}
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                        <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="font-medium text-red-900">
+                                ¿Eliminar {deleteConfirmUnit?.name}?
+                            </p>
+                            <p className="text-sm text-red-700 mt-1">
+                                Esta acción no se puede deshacer. Si la unidad tiene historial, será archivada en su lugar.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button
+                            onClick={() => setDeleteConfirmUnit(null)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+                        >
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

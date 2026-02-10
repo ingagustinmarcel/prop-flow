@@ -24,9 +24,10 @@ export const useData = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
     const { user } = useAuth();
     const [units, setUnits] = useState([]);
+    const [leases, setLeases] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [payments, setPayments] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     // ==================== DATA MAPPERS ====================
     // Convert between database snake_case and JavaScript camelCase
@@ -38,6 +39,7 @@ export const DataProvider = ({ children }) => {
      */
     const mapUnitFromDB = (u) => ({
         ...u,
+        // Legacy fields mapping (for backward compat until migration is 100% complete)
         securityDeposit: u.security_deposit,
         incrementPercentage: u.increment_percentage,
         leaseStart: u.lease_start,
@@ -48,12 +50,50 @@ export const DataProvider = ({ children }) => {
     });
 
     /**
+     * Maps database lease record to application format
+     * @param {Object} l - Lease record from Supabase
+     * @returns {Object} Normalized lease object
+     */
+    const mapLeaseFromDB = (l) => ({
+        id: l.id,
+        unitId: l.unit_id,
+        tenantName: l.tenant_name,
+        rentAmount: l.rent_amount,
+        securityDeposit: l.security_deposit,
+        incrementPercentage: l.increment_percentage,
+        startDate: l.start_date,
+        endDate: l.end_date,
+        lastIncrementDate: l.last_increment_date,
+        status: l.status,
+        userId: l.user_id
+    });
+
+    /**
+     * Maps application lease object to database format
+     * @param {Object} l - Lease object
+     * @returns {Object} DB payload
+     */
+    const mapLeaseToDB = (l) => ({
+        unit_id: l.unitId,
+        tenant_name: l.tenantName,
+        rent_amount: l.rentAmount,
+        security_deposit: l.securityDeposit,
+        increment_percentage: l.incrementPercentage,
+        start_date: l.startDate,
+        end_date: l.endDate,
+        last_increment_date: l.lastIncrementDate,
+        status: l.status || 'ACTIVE',
+        user_id: user.id
+    });
+
+    /**
      * Maps application unit object to database format
      * @param {Object} u - Unit object from application
      * @returns {Object} Database-ready unit record
      */
     const mapUnitToDB = (u) => ({
         name: u.name,
+        // Legacy fields - we might stop writing these soon, but keep for now
         tenant: u.tenant,
         rent: u.rent,
         security_deposit: u.securityDeposit,
@@ -76,24 +116,32 @@ export const DataProvider = ({ children }) => {
         if (!user) return;
         setLoading(true);
 
-        // Fetch units
-        const { data: u } = await supabase.from('units').select('*');
-        if (u) setUnits(u.map(mapUnitFromDB));
+        try {
+            // Fetch units
+            const { data: u } = await supabase.from('units').select('*');
+            if (u) setUnits(u.map(mapUnitFromDB));
 
-        // Fetch expenses
-        const { data: e } = await supabase.from('expenses').select('*');
-        if (e) setExpenses(e.map(x => ({ ...x, unitId: x.unit_id })));
+            // Fetch leases (NEW)
+            const { data: l } = await supabase.from('leases').select('*');
+            if (l) setLeases(l.map(mapLeaseFromDB));
 
-        // Fetch payments
-        const { data: p } = await supabase.from('payments').select('*');
-        if (p) setPayments(p.map(x => ({
-            ...x,
-            unitId: x.unit_id,
-            forMonth: x.for_month,
-            datePaid: x.date_paid
-        })));
+            // Fetch expenses
+            const { data: e } = await supabase.from('expenses').select('*');
+            if (e) setExpenses(e.map(x => ({ ...x, unitId: x.unit_id })));
 
-        setLoading(false);
+            // Fetch payments
+            const { data: p } = await supabase.from('payments').select('*');
+            if (p) setPayments(p.map(x => ({
+                ...x,
+                unitId: x.unit_id,
+                forMonth: x.for_month,
+                datePaid: x.date_paid
+            })));
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Load data when user logs in, clear when user logs out
@@ -102,6 +150,7 @@ export const DataProvider = ({ children }) => {
             fetchAndNormalize();
         } else {
             setUnits([]);
+            setLeases([]);
             setExpenses([]);
             setPayments([]);
             setLoading(false);
@@ -205,22 +254,29 @@ export const DataProvider = ({ children }) => {
             // Check for associated financial data
             const hasPayments = payments.some(p => p.unitId === id);
             const hasExpenses = expenses.some(e => e.unitId === id);
+            // Only count ACTIVE leases, not terminated ones
+            const hasActiveLeases = leases.some(l => l.unitId === id && l.status === 'ACTIVE');
 
-            if (hasPayments || hasExpenses) {
+            if (hasPayments || hasExpenses || hasActiveLeases) {
                 // Archive instead of delete to preserve data integrity
                 await updateUnit(id, { isActive: false });
-                alert("Unit has financial history. It has been archived instead of deleted.");
+                alert("Esta unidad tiene historial de pagos, gastos o contratos activos. Se ha archivado en lugar de eliminarse para preservar los datos.");
                 return;
             }
 
-            // Safe to delete - no financial history
+            // Safe to delete - no financial history or active leases
+            // Note: terminated leases will also be deleted via cascade
             const { error } = await supabase.from('units').delete().eq('id', id);
+
             if (error) throw error;
 
             setUnits(prev => prev.filter(u => u.id !== id));
+            // Also remove all leases for this unit from local state
+            setLeases(prev => prev.filter(l => l.unitId !== id));
+            alert("Unidad eliminada exitosamente.");
         } catch (err) {
-            console.error("Error during unit deletion:", err);
-            alert("Failed to delete unit. It might have linked documents or other data.");
+            console.error("Error deleting unit:", err);
+            alert("Error al eliminar la unidad. Por favor intenta nuevamente.");
         }
     };
 
@@ -232,6 +288,97 @@ export const DataProvider = ({ children }) => {
     const toggleUnitActive = async (id, status) => {
         await updateUnit(id, { isActive: status });
     };
+
+
+    // ==================== LEASES MANAGEMENT ====================
+
+    /**
+     * Adds a new lease to a unit
+     * @param {Object} leaseData - Lease details
+     */
+    const addLease = async (leaseData) => {
+        const tempId = crypto.randomUUID();
+        const optimisticLease = { ...leaseData, id: tempId, userId: user.id, status: 'ACTIVE' };
+
+        setLeases(prev => [...prev, optimisticLease]);
+
+        try {
+            const dbPayload = mapLeaseToDB(leaseData);
+            const { data, error } = await supabase.from('leases').insert([dbPayload]).select();
+            if (error) throw error;
+
+            setLeases(prev => prev.map(l => l.id === tempId ? mapLeaseFromDB(data[0]) : l));
+            return data[0].id;
+        } catch (error) {
+            console.error("Error adding lease:", error);
+            setLeases(prev => prev.filter(l => l.id !== tempId));
+            throw error;
+        }
+    };
+
+    /**
+     * Terminates a lease (sets status to TERMINATED and end date to today)
+     * @param {string} leaseId 
+     */
+    const terminateLease = async (leaseId) => {
+        const today = new Date().toISOString().split('T')[0];
+
+        // Optimistic update
+        setLeases(prev => prev.map(l =>
+            l.id === leaseId ? { ...l, status: 'TERMINATED', endDate: today } : l
+        ));
+
+        try {
+            const { error } = await supabase
+                .from('leases')
+                .update({ status: 'TERMINATED', end_date: today })
+                .eq('id', leaseId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error("Error terminating lease:", error);
+            fetchAndNormalize(); // Revert
+        }
+    };
+
+    /**
+     * Updates an existing lease
+     * @param {string} leaseId - Lease ID to update
+     * @param {Object} updates - Fields to update
+     */
+    const updateLease = async (leaseId, updates) => {
+        // Optimistic update
+        setLeases(prev => prev.map(l =>
+            l.id === leaseId ? { ...l, ...updates } : l
+        ));
+
+        try {
+            const dbPayload = mapLeaseToDB({ ...updates, id: leaseId });
+            // Remove id from payload as it's used in the where clause
+            delete dbPayload.id;
+            delete dbPayload.user_id; // Don't update user_id
+
+            const { error } = await supabase
+                .from('leases')
+                .update(dbPayload)
+                .eq('id', leaseId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error("Error updating lease:", error);
+            fetchAndNormalize(); // Revert
+        }
+    };
+
+    /**
+     * Helper to get the active lease for a unit
+     * @param {string} unitId 
+     * @returns {Object|undefined} Active lease
+     */
+    const getActiveLease = (unitId) => {
+        return leases.find(l => l.unitId === unitId && l.status === 'ACTIVE');
+    };
+
 
     // ==================== EXPENSES MANAGEMENT ====================
 
@@ -308,11 +455,15 @@ export const DataProvider = ({ children }) => {
         const unit = units.find(u => u.id === unitId);
         if (!unit) return;
 
+        // Use lease rent if available (fallback to legacy unit rent)
+        const activeLease = getActiveLease(unitId);
+        const rentAmount = activeLease ? activeLease.rentAmount : unit.rent;
+
         const paymentData = {
             unit_id: unitId,
             user_id: user.id,
             date_paid: customDate || new Date().toISOString().split('T')[0],
-            amount: unit.rent, // Snapshot current rent at time of payment
+            amount: rentAmount, // Snapshot current rent at time of payment
             for_month: forMonth
         };
 
@@ -447,12 +598,17 @@ export const DataProvider = ({ children }) => {
     // Memoize to prevent unnecessary re-renders
     const value = useMemo(() => ({
         units,
+        leases,
         expenses,
         payments,
         addUnit,
         updateUnit,
         deleteUnit,
         toggleUnitActive,
+        addLease,
+        updateLease,
+        terminateLease,
+        getActiveLease,
         addExpense,
         deleteExpense,
         markPaid,
@@ -460,7 +616,7 @@ export const DataProvider = ({ children }) => {
         deletePayment,
         migrateLocalData,
         loading
-    }), [units, expenses, payments, loading]);
+    }), [units, leases, expenses, payments, loading]);
 
     return (
         <DataContext.Provider value={value}>

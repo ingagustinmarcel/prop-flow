@@ -87,15 +87,14 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
 
     // Running rent tracks the evolving rent for future calculations
     let runningRent = unit.rent;
-    let loopDate = leaseStart;
     let iterations = 0;
 
     // Generate updates at regular intervals from lease start
     while (iterations < 60) { // Safety limit
         iterations++;
 
-        // Calculate next update date (anchored to lease start)
-        const targetDate = addMonths(loopDate, frequencyMonths);
+        // Calculate next update date (anchored to lease start to avoid drift)
+        const targetDate = addMonths(leaseStart, iterations * frequencyMonths);
 
         // Stop if we've passed the lease end date
         if (isAfter(targetDate, leaseEnd)) break;
@@ -104,7 +103,8 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
         const isFuture = isAfter(targetDate, lastInc);
 
         // Calculate the interval: from previous update to this update
-        const prevDate = addMonths(targetDate, -frequencyMonths);
+        // We calculate prevDate based on lease start too for consistency
+        const prevDate = addMonths(leaseStart, (iterations - 1) * frequencyMonths);
         const calculation = calculateInterval(runningRent, prevDate, targetDate, ipcHistory);
 
         let itemRent = 0;
@@ -133,8 +133,6 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
             details: calculation.details,
             status: isFuture ? 'pending' : 'completed'
         });
-
-        loopDate = targetDate;
     }
 
     return schedule;
