@@ -6,12 +6,16 @@ export function cn(...inputs) {
 }
 
 export const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
+    // Custom formatter for Argentine format:
+    // - $ symbol at the beginning
+    // - Dot (.) for thousands separator
+    // - Comma (,) for decimals (when needed)
+    const formatted = new Intl.NumberFormat('de-DE', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(amount);
+
+    return `$ ${formatted}`;
 };
 
 export const formatDate = (dateString) => {

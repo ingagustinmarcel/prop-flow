@@ -267,8 +267,8 @@ export default function Overview() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#64748b', fontSize: 11 }}
-                                    tickFormatter={(val) => `$${val}`}
-                                    width={50}
+                                    tickFormatter={(val) => `$ ${val.toLocaleString('de-DE')}`}
+                                    width={60}
                                 />
                                 <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="4 4" />
                                 <Tooltip
