@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
 import LeaseModal from '../components/LeaseModal';
 import ExpenseModal from '../components/ExpenseModal';
+
 import { Edit2, Check, Plus, Trash2, Home, DollarSign, X, UserMinus, FilePlus, AlertTriangle, ChevronDown } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 
@@ -228,6 +229,7 @@ const UnitCard = ({ unit, activeLease, allLeases = [], onSave, onDelete, onAddEx
     );
 };
 
+
 export default function Units() {
     const { t } = useTranslation();
     const { units, leases, getActiveLease, addUnit, updateUnit, deleteUnit, toggleUnitActive, addExpense, terminateLease, addLease, updateLease } = useData();
@@ -242,6 +244,8 @@ export default function Units() {
 
     // Delete Confirmation Modal State
     const [deleteConfirmUnit, setDeleteConfirmUnit] = useState(null);
+
+
 
     const handleAddUnit = () => {
         const newUnit = {
@@ -332,6 +336,7 @@ export default function Units() {
                             unit={unit}
                             activeLease={getActiveLease(unit.id)}
                             allLeases={leases.filter(l => l.unitId === unit.id)}
+
                             onSave={updateUnit}
                             onDelete={setDeleteConfirmUnit}
                             onAddExpense={setExpenseModalUnit}
@@ -439,6 +444,8 @@ export default function Units() {
                     </div>
                 </div>
             </Modal>
-        </div>
+
+
+        </div >
     );
 }

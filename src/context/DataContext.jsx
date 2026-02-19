@@ -27,6 +27,7 @@ export const DataProvider = ({ children }) => {
     const [leases, setLeases] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [payments, setPayments] = useState([]);
+    const [maintenances, setMaintenances] = useState([]);
     const [loading, setLoading] = useState(false);
 
     // ==================== DATA MAPPERS ====================
@@ -106,6 +107,28 @@ export const DataProvider = ({ children }) => {
         user_id: user.id
     });
 
+    const mapMaintenanceFromDB = (m) => ({
+        id: m.id,
+        unitId: m.unit_id,
+        title: m.title,
+        frequencyMonths: m.frequency_months,
+        lastPerformed: m.last_performed,
+        nextDue: m.next_due,
+        status: m.status,
+        notes: m.notes
+    });
+
+    const mapMaintenanceToDB = (m) => ({
+        unit_id: m.unitId,
+        title: m.title,
+        frequency_months: m.frequencyMonths,
+        last_performed: m.lastPerformed,
+        next_due: m.nextDue,
+        status: m.status || 'PENDING',
+        notes: m.notes,
+        user_id: user.id
+    });
+
     // ==================== DATA FETCHING ====================
 
     /**
@@ -117,28 +140,41 @@ export const DataProvider = ({ children }) => {
         setLoading(true);
 
         try {
-            // Fetch units
-            const { data: u } = await supabase.from('units').select('*');
-            if (u) setUnits(u.map(mapUnitFromDB));
+            const [
+                { data: u, error: uErr },
+                { data: l, error: lErr },
+                { data: e, error: eErr },
+                { data: p, error: pErr },
+                { data: m, error: mErr }
+            ] = await Promise.all([
+                supabase.from('units').select('*'),
+                supabase.from('leases').select('*'),
+                supabase.from('expenses').select('*'),
+                supabase.from('payments').select('*'),
+                supabase.from('maintenances').select('*'),
+            ]);
 
-            // Fetch leases (NEW)
-            const { data: l } = await supabase.from('leases').select('*');
-            if (l) setLeases(l.map(mapLeaseFromDB));
+            if (uErr) console.error('Error fetching units:', uErr);
+            else if (u) setUnits(u.map(mapUnitFromDB));
 
-            // Fetch expenses
-            const { data: e } = await supabase.from('expenses').select('*');
-            if (e) setExpenses(e.map(x => ({ ...x, unitId: x.unit_id })));
+            if (lErr) console.error('Error fetching leases:', lErr);
+            else if (l) setLeases(l.map(mapLeaseFromDB));
 
-            // Fetch payments
-            const { data: p } = await supabase.from('payments').select('*');
-            if (p) setPayments(p.map(x => ({
+            if (eErr) console.error('Error fetching expenses:', eErr);
+            else if (e) setExpenses(e.map(x => ({ ...x, unitId: x.unit_id })));
+
+            if (pErr) console.error('Error fetching payments:', pErr);
+            else if (p) setPayments(p.map(x => ({
                 ...x,
                 unitId: x.unit_id,
                 forMonth: x.for_month,
                 datePaid: x.date_paid
             })));
+
+            if (mErr) console.error('Error fetching maintenances:', mErr);
+            else if (m) setMaintenances(m.map(mapMaintenanceFromDB));
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error('Unexpected error fetching data:', error);
         } finally {
             setLoading(false);
         }
@@ -153,6 +189,7 @@ export const DataProvider = ({ children }) => {
             setLeases([]);
             setExpenses([]);
             setPayments([]);
+            setMaintenances([]);
             setLoading(false);
         }
     }, [user]);
@@ -552,47 +589,105 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    // ==================== MIGRATION UTILITY ====================
+    // ==================== MAINTENANCE MANAGEMENT ====================
 
     /**
-     * Migrates data from localStorage to Supabase
-     * Used for transitioning from client-side to cloud storage
+     * Adds a new maintenance task
+     * @param {Object} taskData 
      */
-    const migrateLocalData = async () => {
+    const addMaintenance = async (taskData) => {
+        const tempId = crypto.randomUUID();
+
+        // Calculate next due date if not provided
+        let nextDue = taskData.nextDue;
+        if (!nextDue && taskData.lastPerformed) {
+            const date = new Date(taskData.lastPerformed);
+            date.setMonth(date.getMonth() + parseInt(taskData.frequencyMonths));
+            nextDue = date.toISOString().split('T')[0];
+        } else if (!nextDue) {
+            // If never done (new install), maybe due in X months from now? 
+            // Or verify logic. Let's assume start counting from now.
+            const date = new Date();
+            date.setMonth(date.getMonth() + parseInt(taskData.frequencyMonths));
+            nextDue = date.toISOString().split('T')[0];
+        }
+
+        const optimisticTask = { ...taskData, id: tempId, nextDue, status: 'PENDING', userId: user.id };
+        setMaintenances(prev => [...prev, optimisticTask]);
+
         try {
-            setLoading(true);
-            const localUnits = JSON.parse(localStorage.getItem('propflow_units') || '[]');
+            const dbPayload = mapMaintenanceToDB({ ...taskData, nextDue });
+            const { data, error } = await supabase.from('maintenances').insert([dbPayload]).select();
+            if (error) throw error;
 
-            if (localUnits.length === 0) {
-                alert("No local data found to migrate.");
-                setLoading(false);
-                return;
-            }
-
-            let migratedCount = 0;
-            for (const unit of localUnits) {
-                // Remove local ID to let database generate new UUID
-                const { id, ...unitData } = unit;
-                const dbPayload = mapUnitToDB(unitData);
-
-                // Remove undefined fields
-                Object.keys(dbPayload).forEach(key =>
-                    dbPayload[key] === undefined && delete dbPayload[key]
-                );
-
-                const { error } = await supabase.from('units').insert([dbPayload]);
-                if (!error) migratedCount++;
-            }
-
-            alert(`Migration Complete! Moved ${migratedCount} units to the cloud.`);
-            fetchAndNormalize();
-        } catch (err) {
-            console.error("Migration failed:", err);
-            alert("Migration failed. Check console.");
-        } finally {
-            setLoading(false);
+            setMaintenances(prev => prev.map(m => m.id === tempId ? mapMaintenanceFromDB(data[0]) : m));
+        } catch (error) {
+            console.error("Error adding maintenance:", error);
+            setMaintenances(prev => prev.filter(m => m.id !== tempId));
         }
     };
+
+    /**
+     * Completes a maintenance task and creates an expense
+     * @param {string} id - Maintenance ID
+     * @param {Object} completionData - { cost, datePerformed, notes }
+     */
+    const completeMaintenance = async (id, { cost, datePerformed, notes }) => {
+        const task = maintenances.find(m => m.id === id);
+        if (!task) return;
+
+        // Calculate next due
+        const date = new Date(datePerformed);
+        date.setMonth(date.getMonth() + parseInt(task.frequencyMonths));
+        const nextDue = date.toISOString().split('T')[0];
+
+        // Optimistic update
+        setMaintenances(prev => prev.map(m =>
+            m.id === id ? { ...m, lastPerformed: datePerformed, nextDue, status: 'PENDING' } : m
+        ));
+
+        // Create Expense automatically
+        await addExpense({
+            category: 'Maintenance',
+            amount: parseFloat(cost),
+            date: datePerformed,
+            description: `Mantenimiento Preventivo: ${task.title}`,
+            unitId: task.unitId
+        });
+
+        try {
+            const { error } = await supabase
+                .from('maintenances')
+                .update({
+                    last_performed: datePerformed,
+                    next_due: nextDue,
+                    status: 'PENDING' // Reset status to pending for next cycle
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error("Error completing maintenance:", error);
+            fetchAndNormalize();
+        }
+    };
+
+    /**
+     * Deletes a maintenance task
+     * @param {string} id 
+     */
+    const deleteMaintenance = async (id) => {
+        try {
+            const { error } = await supabase.from('maintenances').delete().eq('id', id);
+            if (error) throw error;
+            setMaintenances(prev => prev.filter(m => m.id !== id));
+        } catch (error) {
+            console.error("Error deleting maintenance:", error);
+        }
+    };
+
+
+
 
     // ==================== CONTEXT VALUE ====================
     // Memoize to prevent unnecessary re-renders
@@ -601,6 +696,7 @@ export const DataProvider = ({ children }) => {
         leases,
         expenses,
         payments,
+        maintenances,
         addUnit,
         updateUnit,
         deleteUnit,
@@ -614,9 +710,12 @@ export const DataProvider = ({ children }) => {
         markPaid,
         updatePayment,
         deletePayment,
-        migrateLocalData,
+        addMaintenance,
+        completeMaintenance,
+        deleteMaintenance,
         loading
-    }), [units, leases, expenses, payments, loading]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [units, leases, expenses, payments, maintenances, loading]);
 
     return (
         <DataContext.Provider value={value}>

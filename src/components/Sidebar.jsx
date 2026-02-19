@@ -9,7 +9,8 @@ import {
     Wallet,
     CalendarCheck,
     Globe,
-    LogOut
+    LogOut,
+    Wrench
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -31,7 +32,7 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
 
 export default function Sidebar() {
     const { t, i18n } = useTranslation();
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const [currentLang, setCurrentLang] = useState(i18n.language);
 
     const toggleLanguage = () => {
@@ -53,12 +54,18 @@ export default function Sidebar() {
                 <SidebarItem to="/" icon={LayoutDashboard} label={t('nav.overview')} />
                 <SidebarItem to="/units" icon={Building2} label={t('nav.units')} />
                 <SidebarItem to="/cashflow" icon={Wallet} label={t('nav.cashflow')} />
+                <SidebarItem to="/maintenance" icon={Wrench} label={t('nav.maintenance')} />
                 <SidebarItem to="/calendar" icon={CalendarCheck} label={t('nav.calendar')} />
                 <SidebarItem to="/increments" icon={TrendingUp} label={t('nav.increments')} />
                 <SidebarItem to="/calculators" icon={Calculator} label={t('nav.calculators')} />
             </nav>
 
-            <div className="p-4 border-t border-slate-100 space-y-2">
+            <div className="p-4 border-t border-slate-100">
+                <div className="px-2 py-2 mb-2 bg-slate-50 rounded-lg text-center">
+                    <p className="text-xs text-slate-500 font-medium truncate" title={user?.email}>
+                        {user?.email}
+                    </p>
+                </div>
                 <button
                     onClick={toggleLanguage}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium text-slate-700"

@@ -12,14 +12,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Building2, DollarSign, Calendar, TrendingUp, Calculator, Globe, LogOut } from 'lucide-react';
+import { Menu, X, Home, Building2, DollarSign, Calendar, TrendingUp, Calculator, Globe, LogOut, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
 export default function MobileNav() {
     const { t, i18n } = useTranslation();
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState(i18n.language);
     const location = useLocation();
@@ -45,6 +45,7 @@ export default function MobileNav() {
         { path: '/', icon: Home, label: t('nav.overview') || 'Overview' },
         { path: '/units', icon: Building2, label: t('nav.units') || 'Units' },
         { path: '/cashflow', icon: DollarSign, label: t('nav.cashflow') || 'Cashflow' },
+        { path: '/maintenance', icon: Wrench, label: t('nav.maintenance') || 'Maintenance' },
         { path: '/calendar', icon: Calendar, label: t('nav.calendar') || 'Calendar' },
         { path: '/increments', icon: TrendingUp, label: t('nav.increments') || 'Rent Increments' },
         { path: '/calculators', icon: Calculator, label: t('nav.calculators') || 'Calculators' },
@@ -121,6 +122,11 @@ export default function MobileNav() {
 
                 {/* Language & Logout Buttons */}
                 <div className="px-4 py-3 space-y-2 border-t border-slate-200">
+                    <div className="px-2 py-2 mb-2 bg-slate-50 rounded-lg text-center">
+                        <p className="text-xs text-slate-500 font-medium truncate" title={user?.email}>
+                            {user?.email}
+                        </p>
+                    </div>
                     <button
                         onClick={toggleLanguage}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium text-slate-700"

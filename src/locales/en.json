@@ -5,6 +5,7 @@
         "cashflow": "Property Cashflow",
         "calendar": "Payment Calendar",
         "increments": "Rent Increments",
+        "maintenance": "Maintenance",
         "calculators": "Calculators"
     },
     "sidebar": {
