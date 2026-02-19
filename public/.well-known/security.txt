@@ -1,0 +1,3 @@
+Contact: mailto:agustin_789@hotmail.com
+Preferred-Languages: es, en
+Policy: Please report any security vulnerabilities responsibly via the contact email above.

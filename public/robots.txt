@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /
+
+# PropFlow is a private property management application.
+# No public content to index.
