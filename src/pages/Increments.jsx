@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { TrendingUp, CalendarClock, ArrowRight, Mail, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { addMonths, parseISO, format, differenceInDays } from 'date-fns';
@@ -11,6 +12,7 @@ import { calculateNextRent, calculateFullSchedule } from '../lib/rentCalculator'
 export default function Increments() {
     const { units } = useData();
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const [emailModal, setEmailModal] = useState({ isOpen: false, unit: null, data: null });
     const [ipcHistory, setIpcHistory] = useState([]);
     const [loadingIpc, setLoadingIpc] = useState(true);
@@ -140,7 +142,6 @@ export default function Increments() {
                                 </div>
 
                                 {/* Actions */}
-                                {/* Actions */}
                                 <div className="mt-auto">
                                     {unit.tenantEmail ? (
                                         <button
@@ -149,6 +150,14 @@ export default function Increments() {
                                         >
                                             <Mail size={16} />
                                             {t('increments.notifyTenant')}
+                                        </button>
+                                    ) : daysRemaining <= 15 ? (
+                                        <button
+                                            onClick={() => navigate('/units')}
+                                            className="w-full flex items-center justify-center gap-2 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-sm font-bold transition-colors border border-amber-200"
+                                        >
+                                            <Mail size={16} />
+                                            ⚠️ {t('increments.noEmailConfigured')} — Agregar ahora
                                         </button>
                                     ) : (
                                         <button

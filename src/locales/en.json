@@ -95,7 +95,11 @@
         "onTime": "On Time (≤ 10th)",
         "late": "Late (11-20th)",
         "severe": "Severe (> 20th)",
-        "downloadReceipt": "Download Receipt"
+        "downloadReceipt": "Download Receipt",
+        "managePayment": "Manage Payment",
+        "paymentRecorded": "Payment recorded for",
+        "datePaid": "Date Paid",
+        "receipt": "Receipt"
     },
     "increments": {
         "title": "Rent Increment Tracker",
@@ -172,6 +176,22 @@
         "cancel": "Cancel",
         "close": "Close",
         "confirm": "Confirm",
+        "saveChanges": "Save Changes",
         "previewEmail": "Review Email Notification"
+    },
+    "receipt": {
+        "title": "RENT RECEIPT",
+        "receiptId": "Receipt ID",
+        "dateIssued": "Date Issued",
+        "propertyDetails": "Property Details",
+        "property": "Property",
+        "tenant": "Tenant",
+        "paymentInfo": "Payment Information",
+        "period": "Period",
+        "amountPaid": "Amount Paid",
+        "datePaid": "Date Paid",
+        "paidInFull": "PAID IN FULL",
+        "footer": "Thank you for your payment and for choosing PropFlow.",
+        "na": "N/A"
     }
 }

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
-import { User, DollarSign, Calendar } from 'lucide-react';
+import { User, DollarSign, Calendar, Mail } from 'lucide-react';
 
-export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, mode = 'add', lease = null }) {
+export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, mode = 'add', lease = null, currentTenantEmail = '' }) {
     const { t } = useTranslation();
     const [formData, setFormData] = useState({
         tenantName: '',
+        tenantEmail: '',
         rentAmount: '',
         securityDeposit: '',
         startDate: new Date().toISOString().split('T')[0],
@@ -18,6 +19,7 @@ export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, 
         if (mode === 'edit' && lease) {
             setFormData({
                 tenantName: lease.tenantName || '',
+                tenantEmail: currentTenantEmail || '',
                 rentAmount: lease.rentAmount?.toString() || '',
                 securityDeposit: lease.securityDeposit?.toString() || '',
                 startDate: lease.startDate || new Date().toISOString().split('T')[0],
@@ -27,6 +29,7 @@ export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, 
             // Reset form for add mode
             setFormData({
                 tenantName: '',
+                tenantEmail: '',
                 rentAmount: '',
                 securityDeposit: '',
                 startDate: new Date().toISOString().split('T')[0],
@@ -63,6 +66,7 @@ export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, 
         if (mode === 'add') {
             setFormData({
                 tenantName: '',
+                tenantEmail: '',
                 rentAmount: '',
                 securityDeposit: '',
                 startDate: new Date().toISOString().split('T')[0],
@@ -110,6 +114,22 @@ export default function LeaseModal({ isOpen, onClose, unitId, unitName, onSave, 
                         min="0"
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                         required
+                    />
+                </div>
+
+                {/* Tenant Email */}
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <Mail size={16} className="inline mr-1" />
+                        Email del Inquilino
+                    </label>
+                    <input
+                        type="email"
+                        name="tenantEmail"
+                        value={formData.tenantEmail}
+                        onChange={handleChange}
+                        placeholder="inquilino@email.com"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                 </div>
 

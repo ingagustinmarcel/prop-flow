@@ -46,8 +46,8 @@ export const DataProvider = ({ children }) => {
         leaseStart: u.lease_start,
         leaseEnd: u.lease_end,
         lastIncrementDate: u.last_increment_date,
-        isActive: u.is_active ?? true,
-        tenantEmail: u.tenant_email
+        isActive: u.is_active ?? true
+        // tenantEmail is derived from the active lease — not stored on unit
     });
 
     /**
@@ -59,6 +59,7 @@ export const DataProvider = ({ children }) => {
         id: l.id,
         unitId: l.unit_id,
         tenantName: l.tenant_name,
+        tenantEmail: l.tenant_email || '',
         rentAmount: l.rent_amount,
         securityDeposit: l.security_deposit,
         incrementPercentage: l.increment_percentage,
@@ -77,6 +78,7 @@ export const DataProvider = ({ children }) => {
     const mapLeaseToDB = (l) => ({
         unit_id: l.unitId,
         tenant_name: l.tenantName,
+        tenant_email: l.tenantEmail || null,
         rent_amount: l.rentAmount,
         security_deposit: l.securityDeposit,
         increment_percentage: l.incrementPercentage,
@@ -103,8 +105,8 @@ export const DataProvider = ({ children }) => {
         lease_end: u.leaseEnd,
         last_increment_date: u.lastIncrementDate,
         is_active: u.isActive ?? true,
-        tenant_email: u.tenantEmail,
         user_id: user.id
+        // tenant_email intentionally omitted — email lives on the lease
     });
 
     const mapMaintenanceFromDB = (m) => ({
@@ -158,7 +160,22 @@ export const DataProvider = ({ children }) => {
             else if (u) setUnits(u.map(mapUnitFromDB));
 
             if (lErr) console.error('Error fetching leases:', lErr);
-            else if (l) setLeases(l.map(mapLeaseFromDB));
+            else if (l) {
+                const normalizedLeases = l.map(mapLeaseFromDB);
+                setLeases(normalizedLeases);
+
+                // Derive tenantEmail on units from the active lease (email belongs to the tenant, not the unit)
+                if (u && !uErr) {
+                    const activeLeaseByUnit = {};
+                    normalizedLeases.forEach(lease => {
+                        if (lease.status === 'ACTIVE') activeLeaseByUnit[lease.unitId] = lease;
+                    });
+                    setUnits(u.map(rawUnit => ({
+                        ...mapUnitFromDB(rawUnit),
+                        tenantEmail: activeLeaseByUnit[rawUnit.id]?.tenantEmail || ''
+                    })));
+                }
+            }
 
             if (eErr) console.error('Error fetching expenses:', eErr);
             else if (e) setExpenses(e.map(x => ({ ...x, unitId: x.unit_id })));
@@ -338,6 +355,12 @@ export const DataProvider = ({ children }) => {
         const optimisticLease = { ...leaseData, id: tempId, userId: user.id, status: 'ACTIVE' };
 
         setLeases(prev => [...prev, optimisticLease]);
+        // Optimistically update unit's tenantEmail from the new lease
+        if (leaseData.unitId && leaseData.tenantEmail !== undefined) {
+            setUnits(prev => prev.map(u =>
+                u.id === leaseData.unitId ? { ...u, tenantEmail: leaseData.tenantEmail } : u
+            ));
+        }
 
         try {
             const dbPayload = mapLeaseToDB(leaseData);
@@ -384,10 +407,17 @@ export const DataProvider = ({ children }) => {
      * @param {Object} updates - Fields to update
      */
     const updateLease = async (leaseId, updates) => {
-        // Optimistic update
+        // Optimistic update on leases
         setLeases(prev => prev.map(l =>
             l.id === leaseId ? { ...l, ...updates } : l
         ));
+        // Optimistically propagate email change to the unit
+        const lease = leases.find(l => l.id === leaseId);
+        if (lease && updates.tenantEmail !== undefined) {
+            setUnits(prev => prev.map(u =>
+                u.id === lease.unitId ? { ...u, tenantEmail: updates.tenantEmail } : u
+            ));
+        }
 
         try {
             const dbPayload = mapLeaseToDB({ ...updates, id: leaseId });

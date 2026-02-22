@@ -168,7 +168,8 @@ export default function Calculators() {
                 };
             });
 
-            const newRent = Math.round(currentRent * accumulatedFactor);
+            const rawRent = currentRent * accumulatedFactor;
+            const newRent = Math.round(rawRent / 500) * 500;
             const increasePercent = (accumulatedFactor - 1) * 100;
             const diff = newRent - currentRent;
 

@@ -203,8 +203,9 @@ const calculateInterval = (baseRent, startDate, endDate, ipcHistory) => {
         }
     }
 
-    // Apply compounded factor to base rent
-    const newRent = Math.round(baseRent * accumulatedFactor);
+    // Apply compounded factor to base rent and round to nearest 500
+    const rawRent = baseRent * accumulatedFactor;
+    const newRent = Math.round(rawRent / 500) * 500;
 
     return {
         newRent,

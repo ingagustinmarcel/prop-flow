@@ -175,15 +175,15 @@ export default function CalendarPage() {
             <Modal
                 isOpen={!!editPayment}
                 onClose={() => setEditPayment(null)}
-                title={`Manage Payment: ${editPayment?.unit?.name}`}
+                title={`${t('calendar.managePayment')}: ${editPayment?.unit?.name}`}
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-500">
-                        Payment recorded for <strong>{editPayment?.payment?.forMonth}</strong>
+                        {t('calendar.paymentRecorded')} <strong>{editPayment?.payment?.forMonth}</strong>
                     </p>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Date Paid</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('calendar.datePaid')}</label>
                         <input
                             type="date"
                             value={newDate}
@@ -195,25 +195,39 @@ export default function CalendarPage() {
                     <div className="flex gap-3 justify-end pt-4">
                         <button
                             onClick={() => {
-                                generateReceipt(editPayment.payment, editPayment.unit);
+                                generateReceipt(editPayment.payment, editPayment.unit, {
+                                    title: t('receipt.title'),
+                                    receiptId: t('receipt.receiptId'),
+                                    dateIssued: t('receipt.dateIssued'),
+                                    propertyDetails: t('receipt.propertyDetails'),
+                                    property: t('receipt.property'),
+                                    tenant: t('receipt.tenant'),
+                                    paymentInfo: t('receipt.paymentInfo'),
+                                    period: t('receipt.period'),
+                                    amountPaid: t('receipt.amountPaid'),
+                                    datePaid: t('receipt.datePaid'),
+                                    paidInFull: t('receipt.paidInFull'),
+                                    footer: t('receipt.footer'),
+                                    na: t('receipt.na'),
+                                });
                             }}
                             className="flex-1 mr-auto flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm font-semibold"
                         >
                             <Download size={16} />
-                            Receipt
+                            {t('calendar.receipt')}
                         </button>
 
                         <button
                             onClick={handleDeletePayment}
                             className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-bold transition-colors"
                         >
-                            Delete
+                            {t('common.delete')}
                         </button>
                         <button
                             onClick={handleUpdatePayment}
                             className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-bold shadow-sm transition-colors"
                         >
-                            Save Changes
+                            {t('common.saveChanges')}
                         </button>
                     </div>
                 </div>

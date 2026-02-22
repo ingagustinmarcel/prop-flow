@@ -371,6 +371,7 @@ export default function Units() {
                 unitName={leaseModalUnit?.name}
                 mode={leaseModalMode}
                 lease={editingLease}
+                currentTenantEmail={leaseModalUnit?.tenantEmail || ''}
                 onSave={handleLeaseSave}
             />
 

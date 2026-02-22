@@ -95,7 +95,11 @@
         "onTime": "A Tiempo (≤ 10)",
         "late": "Tarde (11-20)",
         "severe": "Muy Tarde (> 20)",
-        "downloadReceipt": "Descargar Recibo"
+        "downloadReceipt": "Descargar Recibo",
+        "managePayment": "Gestionar Pago",
+        "paymentRecorded": "Pago registrado para",
+        "datePaid": "Fecha de Pago",
+        "receipt": "Recibo"
     },
     "increments": {
         "title": "Seguimiento de Incrementos",
@@ -172,6 +176,22 @@
         "cancel": "Cancelar",
         "close": "Cerrar",
         "confirm": "Confirmar",
+        "saveChanges": "Guardar Cambios",
         "previewEmail": "Revisar Notificación por Correo"
+    },
+    "receipt": {
+        "title": "RECIBO DE ALQUILER",
+        "receiptId": "N° de Recibo",
+        "dateIssued": "Fecha de Emisión",
+        "propertyDetails": "Datos del Inmueble",
+        "property": "Propiedad",
+        "tenant": "Inquilino",
+        "paymentInfo": "Información de Pago",
+        "period": "Período",
+        "amountPaid": "Monto Abonado",
+        "datePaid": "Fecha de Pago",
+        "paidInFull": "PAGADO COMPLETO",
+        "footer": "Gracias por su pago y por elegir PropFlow.",
+        "na": "N/D"
     }
 }
