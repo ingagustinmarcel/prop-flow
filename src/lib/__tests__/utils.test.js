@@ -31,12 +31,35 @@ describe('formatDate', () => {
         expect(formatDate('')).toBe('');
     });
 
-    it('returns a non-empty string for a valid date', () => {
-        const result = formatDate('2026-01-15');
-        expect(result).toBeTruthy();
-        expect(typeof result).toBe('string');
+    it('formats as dd/mm/yyyy by default (es-AR locale)', () => {
+        // 2026-03-15 should render as 15/3/2026 in es-AR
+        const result = formatDate('2026-03-15'); // default: dd/mm/yyyy
+        expect(result).toContain('15');
+        expect(result).toContain('2026');
+        // Day comes before month in es-AR
+        const dayIndex = result.indexOf('15');
+        const yearIndex = result.indexOf('2026');
+        expect(dayIndex).toBeLessThan(yearIndex);
+    });
+
+    it('formats as mm/dd/yyyy when requested (en-US locale)', () => {
+        // 2026-03-15 → 3/15/2026 in en-US
+        const result = formatDate('2026-03-15', 'mm/dd/yyyy');
+        expect(result).toContain('15');
+        expect(result).toContain('2026');
+        // 15 (day) comes after the month separator in en-US
+        const yearIndex = result.indexOf('2026');
+        expect(yearIndex).toBeGreaterThan(0);
+    });
+
+    it('does not shift date due to timezone (parses date part only)', () => {
+        // A date like 2026-01-01 should never come out as Dec 31 due to UTC shift
+        const result = formatDate('2026-01-01', 'dd/mm/yyyy');
+        expect(result).toContain('2026');
+        expect(result).not.toContain('31');
     });
 });
+
 
 describe('formatBytes', () => {
     it('returns "0 Bytes" for zero', () => {

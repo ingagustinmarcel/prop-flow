@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import {
@@ -8,7 +8,7 @@ import {
     TrendingUp,
     Wallet,
     CalendarCheck,
-    Globe,
+    Settings,
     LogOut,
     Wrench
 } from 'lucide-react';
@@ -31,15 +31,8 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
 );
 
 export default function Sidebar() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { signOut, user } = useAuth();
-    const [currentLang, setCurrentLang] = useState(i18n.language);
-
-    const toggleLanguage = () => {
-        const newLang = currentLang === 'en' ? 'es' : 'en';
-        i18n.changeLanguage(newLang);
-        setCurrentLang(newLang);
-    };
 
     return (
         <div className="w-64 h-screen bg-white border-r border-slate-200 flex flex-col shadow-sm fixed left-0 top-0 hidden md:flex z-50">
@@ -66,16 +59,10 @@ export default function Sidebar() {
                         {user?.email}
                     </p>
                 </div>
-                <button
-                    onClick={toggleLanguage}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium text-slate-700"
-                >
-                    <Globe size={16} />
-                    <span>{currentLang === 'en' ? 'Español' : 'English'}</span>
-                </button>
+                <SidebarItem to="/settings" icon={Settings} label={t('nav.settings')} />
                 <button
                     onClick={signOut}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
                 >
                     <LogOut size={16} />
                     <span>{t('sidebar.logout')}</span>
@@ -83,7 +70,7 @@ export default function Sidebar() {
             </div>
 
             <div className="p-4 border-t border-slate-100 text-xs text-slate-400 text-center">
-                v1.0.0
+                v1.1.0
             </div>
         </div>
     );

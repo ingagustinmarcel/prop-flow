@@ -18,10 +18,15 @@ export const formatCurrency = (amount) => {
     return `$ ${formatted}`;
 };
 
-export const formatDate = (dateString) => {
+export const formatDate = (dateString, dateFormat = 'dd/mm/yyyy') => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString();
+    const locale = dateFormat === 'mm/dd/yyyy' ? 'en-US' : 'es-AR';
+    // Parse as UTC to avoid timezone-shift issues
+    const parts = String(dateString).split('T')[0].split('-');
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return date.toLocaleDateString(locale);
 };
+
 
 export function formatBytes(bytes, decimals = 2) {
     if (!+bytes) return '0 Bytes';

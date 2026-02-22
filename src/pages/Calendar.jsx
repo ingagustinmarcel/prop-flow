@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { cn } from '../lib/utils';
 import { ChevronRight, ChevronLeft, Download } from 'lucide-react';
 import { generateReceipt } from '../lib/receiptService';
+import { useSettings } from '../context/SettingsContext';
 import Modal from '../components/Modal';
 
 const MONTHS = [
@@ -13,6 +14,8 @@ const MONTHS = [
 export default function CalendarPage() {
     const { t } = useTranslation();
     const { units, payments, markPaid, updatePayment, deletePayment } = useData();
+    const { settings } = useSettings();
+
     const [activeMonth, setActiveMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
     const [editPayment, setEditPayment] = useState(null);
@@ -195,6 +198,7 @@ export default function CalendarPage() {
                     <div className="flex gap-3 justify-end pt-4">
                         <button
                             onClick={() => {
+                                const { dateFormat, ownerName, signatureDataUrl } = settings;
                                 generateReceipt(editPayment.payment, editPayment.unit, {
                                     title: t('receipt.title'),
                                     receiptId: t('receipt.receiptId'),
@@ -209,7 +213,7 @@ export default function CalendarPage() {
                                     paidInFull: t('receipt.paidInFull'),
                                     footer: t('receipt.footer'),
                                     na: t('receipt.na'),
-                                });
+                                }, { dateFormat, ownerName, signatureDataUrl });
                             }}
                             className="flex-1 mr-auto flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm font-semibold"
                         >

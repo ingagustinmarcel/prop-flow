@@ -1,7 +1,9 @@
 import { jsPDF } from 'jspdf';
 import { formatCurrency, formatDate } from './utils';
 
-export const generateReceipt = (payment, unit, labels = {}) => {
+export const generateReceipt = (payment, unit, labels = {}, options = {}) => {
+    const { dateFormat = 'dd/mm/yyyy', ownerName = '', signatureDataUrl = null } = options;
+
     const l = {
         title: labels.title || 'RENT RECEIPT',
         receiptId: labels.receiptId || 'Receipt ID',
@@ -17,6 +19,14 @@ export const generateReceipt = (payment, unit, labels = {}) => {
         footer: labels.footer || 'Thank you for your payment and for choosing PropFlow.',
         na: labels.na || 'N/A',
     };
+
+    const today = (() => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    })();
 
     const doc = new jsPDF();
     const primaryColor = '#059669'; // Emerald-600
@@ -41,7 +51,7 @@ export const generateReceipt = (payment, unit, labels = {}) => {
 
     // Receipt Reference
     doc.text(`${l.receiptId}: ${payment.id.slice(0, 8).toUpperCase()}`, margin, startY);
-    doc.text(`${l.dateIssued}: ${new Date().toLocaleDateString()}`, 190, startY, { align: 'right' });
+    doc.text(`${l.dateIssued}: ${formatDate(today, dateFormat)}`, 190, startY, { align: 'right' });
 
     // Divider
     doc.setDrawColor('#e2e8f0');
@@ -65,7 +75,7 @@ export const generateReceipt = (payment, unit, labels = {}) => {
     doc.setTextColor(secondaryColor);
     doc.text(`${l.period}: ${payment.forMonth}`, margin, startY + 65);
     doc.text(`${l.amountPaid}: ${formatCurrency(payment.amount)}`, margin, startY + 73);
-    doc.text(`${l.datePaid}: ${formatDate(payment.datePaid)}`, margin, startY + 81);
+    doc.text(`${l.datePaid}: ${formatDate(payment.datePaid, dateFormat)}`, margin, startY + 81);
 
     // Summary Box
     doc.setFillColor('#f8fafc');
@@ -78,6 +88,27 @@ export const generateReceipt = (payment, unit, labels = {}) => {
     doc.setTextColor(primaryColor);
     doc.setFont('helvetica', 'bold');
     doc.text(l.paidInFull, margin + 85, startY + 115, { align: 'center' });
+
+    // Signature section
+    const sigY = startY + 140;
+    doc.setDrawColor('#e2e8f0');
+    doc.setLineWidth(0.3);
+
+    if (signatureDataUrl) {
+        try {
+            // Render signature image (max 80x30mm, right-aligned)
+            doc.addImage(signatureDataUrl, 'PNG', 110, sigY, 80, 30);
+        } catch (e) {
+            // If image fails, skip silently
+        }
+    }
+
+    // Signature line + owner name (right side)
+    doc.line(110, sigY + 33, 190, sigY + 33);
+    doc.setFontSize(9);
+    doc.setTextColor(secondaryColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text(ownerName || '', 150, sigY + 39, { align: 'center' });
 
     // Footer
     doc.setFontSize(9);

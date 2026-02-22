@@ -6,7 +6,8 @@
         "calendar": "Payment Calendar",
         "increments": "Rent Increments",
         "maintenance": "Maintenance",
-        "calculators": "Calculators"
+        "calculators": "Calculators",
+        "settings": "Settings"
     },
     "sidebar": {
         "logout": "Log Out"
@@ -193,5 +194,24 @@
         "paidInFull": "PAID IN FULL",
         "footer": "Thank you for your payment and for choosing PropFlow.",
         "na": "N/A"
+    },
+    "settings": {
+        "title": "Settings",
+        "account": "Account",
+        "ownerName": "Owner / Manager Name",
+        "ownerNamePlaceholder": "e.g. Juan García",
+        "receipts": "Receipts",
+        "signature": "Signature (PNG)",
+        "signatureHint": "Upload a PNG signature to appear on generated receipts.",
+        "uploadSignature": "Upload Signature",
+        "removeSignature": "Remove",
+        "signaturePreview": "Signature preview",
+        "preferences": "Preferences",
+        "language": "Language",
+        "dateFormat": "Date Format",
+        "dateFormatDMY": "DD/MM/YYYY (e.g. 22/02/2026)",
+        "dateFormatMDY": "MM/DD/YYYY (e.g. 02/22/2026)",
+        "save": "Save Settings",
+        "saved": "Settings saved!"
     }
 }

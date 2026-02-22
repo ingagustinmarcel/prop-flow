@@ -6,7 +6,8 @@
         "calendar": "Calendario de Pagos",
         "increments": "Incrementos de Alquiler",
         "maintenance": "Mantenimiento",
-        "calculators": "Calculadoras"
+        "calculators": "Calculadoras",
+        "settings": "Configuración"
     },
     "sidebar": {
         "logout": "Cerrar Sesión"
@@ -193,5 +194,24 @@
         "paidInFull": "PAGADO COMPLETO",
         "footer": "Gracias por su pago y por elegir PropFlow.",
         "na": "N/D"
+    },
+    "settings": {
+        "title": "Configuración",
+        "account": "Cuenta",
+        "ownerName": "Nombre del Dueño / Administrador",
+        "ownerNamePlaceholder": "ej. Juan García",
+        "receipts": "Recibos",
+        "signature": "Firma (PNG)",
+        "signatureHint": "Sube una imagen PNG de tu firma para que aparezca en los recibos generados.",
+        "uploadSignature": "Subir Firma",
+        "removeSignature": "Eliminar",
+        "signaturePreview": "Vista previa de la firma",
+        "preferences": "Preferencias",
+        "language": "Idioma",
+        "dateFormat": "Formato de Fecha",
+        "dateFormatDMY": "DD/MM/AAAA (ej. 22/02/2026)",
+        "dateFormatMDY": "MM/DD/AAAA (ej. 02/22/2026)",
+        "save": "Guardar Configuración",
+        "saved": "¡Configuración guardada!"
     }
 }
