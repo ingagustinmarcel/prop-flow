@@ -46,6 +46,7 @@ export const DataProvider = ({ children }) => {
         leaseStart: u.lease_start,
         leaseEnd: u.lease_end,
         lastIncrementDate: u.last_increment_date,
+        rentOverride: u.rent_override,
         isActive: u.is_active ?? true
         // tenantEmail is derived from the active lease — not stored on unit
     });
@@ -104,6 +105,7 @@ export const DataProvider = ({ children }) => {
         lease_start: u.leaseStart,
         lease_end: u.leaseEnd,
         last_increment_date: u.lastIncrementDate,
+        rent_override: u.rentOverride ?? null,
         is_active: u.isActive ?? true,
         user_id: user.id
         // tenant_email intentionally omitted — email lives on the lease
@@ -281,10 +283,19 @@ export const DataProvider = ({ children }) => {
                 dbPayload.tenant = updatedFields.tenant;
             if (updatedFields.lastIncrementDate !== undefined)
                 dbPayload.last_increment_date = updatedFields.lastIncrementDate;
+            if (updatedFields.rentOverride !== undefined)
+                dbPayload.rent_override = updatedFields.rentOverride;
             if (updatedFields.isActive !== undefined)
                 dbPayload.is_active = updatedFields.isActive;
             if (updatedFields.tenantEmail !== undefined)
                 dbPayload.tenant_email = updatedFields.tenantEmail;
+
+            // Auto-clear rentOverride when rent or lastIncrementDate is updated (settled)
+            if ((updatedFields.rent !== undefined || updatedFields.lastIncrementDate !== undefined) && updatedFields.rentOverride === undefined) {
+                dbPayload.rent_override = null;
+                // Update local state too if we haven't already
+                setUnits(prev => prev.map(u => u.id === id ? { ...u, rentOverride: null } : u));
+            }
 
             const { error } = await supabase
                 .from('units')

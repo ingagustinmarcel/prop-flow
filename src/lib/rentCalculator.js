@@ -52,6 +52,7 @@ export const calculateNextRent = (unit, ipcHistory, frequencyMonths = 4) => {
         increaseAmount: nextUpdate.increaseAmount,
         percentChange: nextUpdate.percentChange,
         isProjected: nextUpdate.isProjected,
+        isManualOverride: nextUpdate.isManualOverride,
         projectionDetails: nextUpdate.details
     };
 };
@@ -90,6 +91,8 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
     let iterations = 0;
 
     // Generate updates at regular intervals from lease start
+    let hasAppliedOverride = false;
+
     while (iterations < 60) { // Safety limit
         iterations++;
 
@@ -103,24 +106,29 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
         const isFuture = isAfter(targetDate, lastInc);
 
         // Calculate the interval: from previous update to this update
-        // We calculate prevDate based on lease start too for consistency
         const prevDate = addMonths(leaseStart, (iterations - 1) * frequencyMonths);
         const calculation = calculateInterval(runningRent, prevDate, targetDate, ipcHistory);
 
         let itemRent = 0;
         let itemInc = 0;
+        let isManualOverride = false;
 
         if (isFuture) {
-            // Future update: calculate the new rent
-            const nextRent = calculation.newRent;
-            itemRent = nextRent;
-            itemInc = nextRent - runningRent;
+            // Future update: check for manual override on the FIRST future update only
+            if (unit.rentOverride && !hasAppliedOverride) {
+                itemRent = Number(unit.rentOverride);
+                itemInc = itemRent - runningRent;
+                isManualOverride = true;
+                hasAppliedOverride = true;
+            } else {
+                itemRent = calculation.newRent;
+                itemInc = itemRent - runningRent;
+            }
 
             // Update running rent for subsequent calculations
-            runningRent = nextRent;
+            runningRent = itemRent;
         } else {
-            // Past update: mark as completed without recalculating
-            // (We don't have historical rent values, only current rent)
+            // Past update
             itemRent = 0;
         }
 
@@ -128,9 +136,10 @@ export const calculateFullSchedule = (unit, ipcHistory, frequencyMonths = 4) => 
             date: targetDate.toISOString().split('T')[0],
             newRent: itemRent,
             increaseAmount: itemInc,
-            percentChange: calculation.percentChange,
-            isProjected: calculation.isProjected,
-            details: calculation.details,
+            percentChange: isManualOverride ? ((itemInc / (itemRent - itemInc)) * 100).toFixed(2) : calculation.percentChange,
+            isProjected: isManualOverride ? false : calculation.isProjected,
+            isManualOverride,
+            details: isManualOverride ? [] : calculation.details,
             status: isFuture ? 'pending' : 'completed'
         });
     }

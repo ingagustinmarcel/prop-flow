@@ -111,3 +111,46 @@ describe('calculateNextRent', () => {
         expect(result.isProjected).toBe(true);
     });
 });
+
+describe('Manual Rent Overrides', () => {
+    it('respects rentOverride for the next pending update', () => {
+        const unit = {
+            rent: 100000,
+            leaseStart: '2025-01-01',
+            leaseEnd: '2026-01-01',
+            rentOverride: 120000,
+        };
+        const ipc = makeIpcHistory(2025, 1, 12, 0.04); // standard IPC calculation would be less
+        const result = calculateNextRent(unit, ipc, 4);
+
+        expect(result.newRent).toBe(120000);
+        expect(result.isManualOverride).toBe(true);
+    });
+
+    it('uses the override as baseline for subsequent automatic updates', () => {
+        const unit = {
+            rent: 100000,
+            leaseStart: '2024-01-01',
+            leaseEnd: '2025-01-01',
+            lastIncrementDate: '2024-01-01',
+            rentOverride: 110000, // Override for first update (May 2024)
+        };
+        const ipc = makeIpcHistory(2024, 1, 12, 0.05); // 5% per month
+        const schedule = calculateFullSchedule(unit, ipc, 4);
+
+        // Update 1 (2024-05-01)
+        expect(schedule[0].newRent).toBe(110000);
+        expect(schedule[0].isManualOverride).toBe(true);
+
+        // Update 2 (2024-09-01) - should build on 110,000 using IPC
+        // Interval calculation uses 4 months of 5% gain: 1.05^4 = 1.2155
+        // 110000 * 1.2155 = 133,705 -> round to 500 = 133,500
+        expect(schedule[1].newRent).toBeGreaterThan(110000);
+        expect(schedule[1].isManualOverride).toBe(false);
+        expect(schedule[1].newRent % 500).toBe(0);
+
+        // Let's verify exactly (1.05^4 * 110000 = 133705.8)
+        expect(schedule[1].newRent).toBe(133500);
+    });
+});
+

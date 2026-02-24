@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { TrendingUp, CalendarClock, ArrowRight, Mail, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, CalendarClock, ArrowRight, Mail, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Edit2, Save, X, RotateCcw } from 'lucide-react';
 import { addMonths, parseISO, format, differenceInDays } from 'date-fns';
 import { formatCurrency, cn } from '../lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,39 @@ export default function Increments() {
 
     const toggleExpand = (unitId) => {
         setExpandedUnits(prev => ({ ...prev, [unitId]: !prev[unitId] }));
+    };
+
+    // Manual Override State
+    const [editingUnitId, setEditingUnitId] = useState(null);
+    const [manualRent, setManualRent] = useState('');
+    const { updateUnit } = useData();
+
+    const startEditing = (unit, currentNewRent) => {
+        setEditingUnitId(unit.id);
+        setManualRent(currentNewRent.toString());
+    };
+
+    const cancelEditing = () => {
+        setEditingUnitId(null);
+        setManualRent('');
+    };
+
+    const handleSaveOverride = async (unitId) => {
+        try {
+            await updateUnit(unitId, { rentOverride: Number(manualRent) });
+            setEditingUnitId(null);
+        } catch (e) {
+            console.error("Error saving rent override", e);
+        }
+    };
+
+    const handleResetOverride = async (unitId) => {
+        try {
+            await updateUnit(unitId, { rentOverride: null });
+            setEditingUnitId(null);
+        } catch (e) {
+            console.error("Error resetting rent override", e);
+        }
     };
 
     useEffect(() => {
@@ -104,9 +137,11 @@ export default function Increments() {
                                     <h3 className="text-lg font-bold text-slate-900">{unit.name}</h3>
                                     <p className="text-xs text-slate-500">{unit.tenant || 'Vacant'}</p>
                                 </div>
-                                <div className={cn("px-2 py-1 rounded text-xs font-bold flex items-center gap-1", isProjected ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700")}>
-                                    {isProjected ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
-                                    Próximo: {details.percentChange}%
+                                <div className={cn("px-2 py-1 rounded text-xs font-bold flex items-center gap-1",
+                                    details.isManualOverride ? "bg-amber-100 text-amber-700" : (isProjected ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700")
+                                )}>
+                                    {details.isManualOverride ? <AlertTriangle size={12} /> : (isProjected ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />)}
+                                    {details.isManualOverride ? "Manual (No respeta IPC)" : `Próximo: ${details.percentChange}%`}
                                 </div>
                             </div>
 
@@ -118,10 +153,67 @@ export default function Increments() {
                                         <p className="text-xl font-bold text-slate-700">{formatCurrency(unit.rent)}</p>
                                     </div>
                                     <ArrowRight className="text-slate-300" />
-                                    <div className="space-y-1 text-right">
-                                        <p className="text-xs text-emerald-600 font-bold uppercase">{t('increments.nextRent')}</p>
-                                        <p className="text-xl font-bold text-emerald-600">{formatCurrency(newRent)}</p>
-                                        <p className="text-xs text-emerald-500">+{formatCurrency(increaseAmount)}</p>
+                                    <div className="space-y-1 text-right relative group/edit">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <p className="text-xs text-emerald-600 font-bold uppercase">{t('increments.nextRent')}</p>
+                                            {editingUnitId !== unit.id && (
+                                                <button
+                                                    onClick={() => startEditing(unit, newRent)}
+                                                    className="p-1 text-slate-300 hover:text-emerald-600 transition-colors"
+                                                    title="Editar monto manualmente"
+                                                >
+                                                    <Edit2 size={12} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {editingUnitId === unit.id ? (
+                                            <div className="flex flex-col items-end gap-2">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-slate-400 font-bold">$</span>
+                                                    <input
+                                                        type="number"
+                                                        value={manualRent}
+                                                        onChange={(e) => setManualRent(e.target.value)}
+                                                        className="w-24 px-2 py-1 text-lg font-bold text-emerald-600 border border-emerald-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none text-right"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleSaveOverride(unit.id)}
+                                                        className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors"
+                                                        title="Guardar"
+                                                    >
+                                                        <Save size={14} />
+                                                    </button>
+                                                    {unit.rentOverride && (
+                                                        <button
+                                                            onClick={() => handleResetOverride(unit.id)}
+                                                            className="p-1 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors"
+                                                            title="Eliminar ajuste manual y volver a IPC"
+                                                        >
+                                                            <RotateCcw size={14} />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={cancelEditing}
+                                                        className="p-1 bg-slate-200 text-slate-600 rounded hover:bg-slate-300 transition-colors"
+                                                        title="Cancelar"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                                <p className="text-[10px] text-amber-600 font-semibold max-w-[120px]">⚠️ Este valor no respeta el IPC calculado.</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-xl font-bold text-emerald-600">{formatCurrency(newRent)}</p>
+                                                <p className="text-xs text-emerald-500">
+                                                    {details.isManualOverride ? "Ajuste manual" : `+${formatCurrency(increaseAmount)}`}
+                                                </p>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
