@@ -13,6 +13,7 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 function App() {
     return (
@@ -37,6 +38,7 @@ function App() {
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </DataProvider>
+                    <SpeedInsights />
                 </SettingsProvider>
             </AuthProvider>
         </Router>
