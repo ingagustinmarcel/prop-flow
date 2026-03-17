@@ -41,19 +41,50 @@ export default function Increments() {
 
     const handleSaveOverride = async (unitId) => {
         try {
-            await updateUnit(unitId, { rentOverride: Number(manualRent) });
+            const unit = units.find(u => u.id === unitId);
+
+            // Find the override slot date (the first future update date)
+            // so we can mark it as 'applied' by updating lastIncrementDate.
+            // This prevents the calculator from getting stuck showing it as 'Vencido'.
+            let overrideSlotDate = null;
+            if (unit && ipcHistory.length > 0) {
+                const schedule = (await import('../lib/rentCalculator')).calculateFullSchedule(unit, ipcHistory, 4);
+                const lastInc = unit.lastIncrementDate
+                    ? new Date(unit.lastIncrementDate)
+                    : new Date(unit.leaseStart);
+                const overrideSlot = schedule.find(s => new Date(s.date) > lastInc);
+                if (overrideSlot) {
+                    overrideSlotDate = overrideSlot.date;
+                }
+            }
+
+            await updateUnit(unitId, {
+                rentOverride: Number(manualRent),
+                rent: Number(manualRent),
+                ...(overrideSlotDate ? { lastIncrementDate: overrideSlotDate } : {}),
+            });
             setEditingUnitId(null);
         } catch (e) {
-            console.error("Error saving rent override", e);
+            console.error('Error saving rent override', e);
         }
     };
 
     const handleResetOverride = async (unitId) => {
         try {
-            await updateUnit(unitId, { rentOverride: null });
+            const unit = units.find(u => u.id === unitId);
+
+            // When removing the override, reset lastIncrementDate to the slot
+            // BEFORE the current override so the IPC cycle continues correctly.
+            let prevSlotDate = unit?.lastIncrementDate || unit?.leaseStart || null;
+
+            await updateUnit(unitId, {
+                rentOverride: null,
+                // lastIncrementDate stays unchanged — the IPC schedule will
+                // pick up from the same anchor date and show the correct next slot.
+            });
             setEditingUnitId(null);
         } catch (e) {
-            console.error("Error resetting rent override", e);
+            console.error('Error resetting rent override', e);
         }
     };
 
