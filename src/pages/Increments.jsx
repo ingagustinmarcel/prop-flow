@@ -59,8 +59,8 @@ export default function Increments() {
             }
 
             await updateUnit(unitId, {
-                rentOverride: Number(manualRent),
-                rent: Number(manualRent),
+                rentOverride: null,        // Clear the override — it's now consumed (reflected in rent + lastIncrementDate)
+                rent: Number(manualRent),  // Update the actual current rent
                 ...(overrideSlotDate ? { lastIncrementDate: overrideSlotDate } : {}),
             });
             setEditingUnitId(null);
@@ -264,16 +264,29 @@ export default function Increments() {
                                     </div>
                                 </div>
 
-                                {/* Actions */}
+                                {/* Actions - Notify button is active only within 20 days of the increment */}
                                 <div className="mt-auto">
                                     {unit.tenantEmail ? (
-                                        <button
-                                            onClick={() => handleNotify(unit, details)}
-                                            className="w-full flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
-                                        >
-                                            <Mail size={16} />
-                                            {t('increments.notifyTenant')}
-                                        </button>
+                                        daysRemaining <= 20 ? (
+                                            // Active: within 20 days — show full notify button
+                                            <button
+                                                onClick={() => handleNotify(unit, details)}
+                                                className="w-full flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
+                                            >
+                                                <Mail size={16} />
+                                                {t('increments.notifyTenant')}
+                                            </button>
+                                        ) : (
+                                            // Disabled: too early, show how many days remain
+                                            <button
+                                                disabled
+                                                className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-bold cursor-not-allowed border border-slate-100"
+                                                title={`Disponible en ${daysRemaining - 20} días`}
+                                            >
+                                                <Mail size={16} />
+                                                {t('increments.notifyTenant')} — en {daysRemaining - 20} días
+                                            </button>
+                                        )
                                     ) : daysRemaining <= 15 ? (
                                         <button
                                             onClick={() => navigate('/units')}
