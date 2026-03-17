@@ -234,11 +234,11 @@ export default function Increments() {
                                                     >
                                                         <Save size={14} />
                                                     </button>
-                                                    {unit.rentOverride && (
+                                                    {(unit.rentOverride || (unit.lastIncrementDate && new Date(unit.lastIncrementDate) > new Date())) && (
                                                         <button
                                                             onClick={() => handleResetOverride(unit.id)}
                                                             className="p-1 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors"
-                                                            title="Eliminar ajuste manual y volver a IPC"
+                                                            title="Revertir al slot anterior (deshacer avance)"
                                                         >
                                                             <RotateCcw size={14} />
                                                         </button>
