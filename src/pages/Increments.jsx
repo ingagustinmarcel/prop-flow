@@ -42,25 +42,27 @@ export default function Increments() {
     const handleSaveOverride = async (unitId) => {
         try {
             const unit = units.find(u => u.id === unitId);
-
-            // Find the override slot date (the first future update date)
-            // so we can mark it as 'applied' by updating lastIncrementDate.
-            // This prevents the calculator from getting stuck showing it as 'Vencido'.
+            const today = new Date();
             let overrideSlotDate = null;
+
             if (unit && ipcHistory.length > 0) {
-                const schedule = (await import('../lib/rentCalculator')).calculateFullSchedule(unit, ipcHistory, 4);
+                const { calculateFullSchedule } = await import('../lib/rentCalculator');
+                const schedule = calculateFullSchedule(unit, ipcHistory, 4);
                 const lastInc = unit.lastIncrementDate
                     ? new Date(unit.lastIncrementDate)
                     : new Date(unit.leaseStart);
                 const overrideSlot = schedule.find(s => new Date(s.date) > lastInc);
-                if (overrideSlot) {
+
+                // Only consume (advance lastIncrementDate) if the slot is in the PAST or today.
+                // If it's a future slot, the override stays active—don't advance the pointer.
+                if (overrideSlot && new Date(overrideSlot.date) <= today) {
                     overrideSlotDate = overrideSlot.date;
                 }
             }
 
             await updateUnit(unitId, {
-                rentOverride: null,        // Clear the override — it's now consumed (reflected in rent + lastIncrementDate)
-                rent: Number(manualRent),  // Update the actual current rent
+                rentOverride: overrideSlotDate ? null : Number(manualRent), // Clear only if consumed
+                rent: Number(manualRent),
                 ...(overrideSlotDate ? { lastIncrementDate: overrideSlotDate } : {}),
             });
             setEditingUnitId(null);
@@ -72,15 +74,29 @@ export default function Increments() {
     const handleResetOverride = async (unitId) => {
         try {
             const unit = units.find(u => u.id === unitId);
+            let rollbackDate = null;
 
-            // When removing the override, reset lastIncrementDate to the slot
-            // BEFORE the current override so the IPC cycle continues correctly.
-            let prevSlotDate = unit?.lastIncrementDate || unit?.leaseStart || null;
+            // Roll back lastIncrementDate by one slot so the correct 'next'
+            // increment is shown after removing the manual override.
+            if (unit && ipcHistory.length > 0 && unit.lastIncrementDate) {
+                const { calculateFullSchedule } = await import('../lib/rentCalculator');
+                // Build schedule from lease start (ignoring current lastIncrementDate)
+                const scheduleFromStart = calculateFullSchedule(
+                    { ...unit, lastIncrementDate: null },
+                    ipcHistory,
+                    4
+                );
+                const currentLastInc = new Date(unit.lastIncrementDate);
+                // Find the slot strictly BEFORE current lastIncrementDate
+                const prevSlots = scheduleFromStart.filter(s => new Date(s.date) < currentLastInc);
+                rollbackDate = prevSlots.length > 0
+                    ? prevSlots[prevSlots.length - 1].date
+                    : unit.leaseStart;
+            }
 
             await updateUnit(unitId, {
                 rentOverride: null,
-                // lastIncrementDate stays unchanged — the IPC schedule will
-                // pick up from the same anchor date and show the correct next slot.
+                ...(rollbackDate !== null ? { lastIncrementDate: rollbackDate } : {}),
             });
             setEditingUnitId(null);
         } catch (e) {
