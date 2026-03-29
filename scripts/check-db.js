@@ -26,19 +26,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
     }
 }
 
-console.log(`🔌 Keep-Alive: Pinging Supabase at ${supabaseUrl}`);
+console.log(`🔌 Keep-Alive ping at ${new Date().toISOString()}`);
+console.log(`📡 Target: ${supabaseUrl}`);
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function keepAlive() {
-    const { error } = await supabase.from('units').select('count', { count: 'exact', head: true });
+    // Use a real SELECT (not just HEAD) so Supabase registers this as API activity
+    const { data, error } = await supabase
+        .from('units')
+        .select('id')
+        .limit(1);
 
     if (error) {
         console.error('❌ Keep-Alive FAILED:', error.message);
+        console.error('Details:', JSON.stringify(error, null, 2));
         process.exit(1);
-    } else {
-        console.log('✅ Keep-Alive SUCCESS: Database is active.');
     }
+
+    console.log(`✅ Keep-Alive SUCCESS — queried units table, got ${data?.length ?? 0} row(s).`);
+    console.log(`⏰ Next ping in ~3 days (cron: 0 0 */3 * *)`);
 }
 
 keepAlive();
