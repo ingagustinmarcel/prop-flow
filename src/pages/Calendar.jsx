@@ -22,7 +22,7 @@ export default function CalendarPage() {
     const [newDate, setNewDate] = useState('');
 
     const getPaymentStatus = (payment) => {
-        if (!payment) return 'bg-slate-50 border-dashed border-slate-300';
+        if (!payment || !payment.datePaid) return 'bg-slate-50 border-dashed border-slate-300';
 
         const day = parseInt(payment.datePaid.split('-')[2], 10);
         if (day <= 10) return 'bg-green-100 text-green-700 border-green-200';
@@ -98,7 +98,7 @@ export default function CalendarPage() {
                         const monthStr = `${year}-${String(activeMonth + 1).padStart(2, '0')}`;
                         const payment = payments.find(p => p.unitId === unit.id && p.forMonth === monthStr);
                         const statusClass = getPaymentStatus(payment);
-                        const dayPaid = payment ? parseInt(payment.datePaid.split('-')[2], 10) : null;
+                        const dayPaid = payment?.datePaid ? parseInt(payment.datePaid.split('-')[2], 10) : null;
 
                         return (
                             <div
@@ -141,7 +141,7 @@ export default function CalendarPage() {
                                 const monthStr = `${year}-${String(idx + 1).padStart(2, '0')}`;
                                 const payment = payments.find(p => p.unitId === unit.id && p.forMonth === monthStr);
                                 const statusClass = getPaymentStatus(payment);
-                                const dayPaid = payment ? parseInt(payment.datePaid.split('-')[2], 10) : null;
+                                const dayPaid = payment?.datePaid ? parseInt(payment.datePaid.split('-')[2], 10) : null;
 
                                 return (
                                     <div

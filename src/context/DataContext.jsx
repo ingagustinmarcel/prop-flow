@@ -552,7 +552,8 @@ export const DataProvider = ({ children }) => {
             ...paymentData,
             id: tempId,
             unitId: unitId,
-            forMonth: forMonth
+            forMonth: forMonth,
+            datePaid: paymentData.date_paid
         }]);
 
         try {
