@@ -32,19 +32,64 @@ console.log(`📡 Target: ${supabaseUrl}`);
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function keepAlive() {
-    // Use a real SELECT (not just HEAD) so Supabase registers this as API activity
-    const { data, error } = await supabase
-        .from('units')
-        .select('id')
-        .limit(1);
+    const DUMMY_UNIT_NAME = 'SUPABASE_KEEPALIVE_DUMMY_UNIT_DO_NOT_USE';
+    
+    // Helper function for the 5-minute delay
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
-    if (error) {
-        console.error('❌ Keep-Alive FAILED:', error.message);
-        console.error('Details:', JSON.stringify(error, null, 2));
+    console.log(`🧹 Step 1: Cleaning up any old dummy units...`);
+    const { error: cleanupError } = await supabase
+        .from('units')
+        .delete()
+        .eq('name', DUMMY_UNIT_NAME);
+
+    if (cleanupError) {
+        console.warn('⚠️ Warning: Failed to clean up old dummy units. Continuing anyway...', cleanupError.message);
+    }
+
+    console.log(`📝 Step 2: Creating a new dummy unit...`);
+    const { data: newUnit, error: insertError } = await supabase
+        .from('units')
+        .insert([{ 
+            name: DUMMY_UNIT_NAME,
+            tenant: 'System',
+            rent: 0,
+            is_active: false
+        }])
+        .select('id')
+        .single();
+
+    if (insertError) {
+        console.error('❌ FATAL: Failed to create dummy unit:', insertError.message);
+        console.error('Details:', JSON.stringify(insertError, null, 2));
         process.exit(1);
     }
 
-    console.log(`✅ Keep-Alive SUCCESS — queried units table, got ${data?.length ?? 0} row(s).`);
+    console.log(`✅ Dummy unit created successfully (ID: ${newUnit.id}).`);
+    
+    // Wait for 5 minutes (300,000 milliseconds)
+    const waitMinutes = 5;
+    console.log(`⏳ Step 3: Waiting for ${waitMinutes} minutes to ensure Supabase registers active usage...`);
+    
+    // Log progress every minute
+    for (let i = 1; i <= waitMinutes; i++) {
+        await delay(60 * 1000);
+        console.log(`   ... ${i} minute(s) passed ...`);
+    }
+
+    console.log(`🗑️ Step 4: Deleting the dummy unit...`);
+    const { error: deleteError } = await supabase
+        .from('units')
+        .delete()
+        .eq('id', newUnit.id);
+
+    if (deleteError) {
+        console.error(`❌ FATAL: Failed to delete dummy unit (ID: ${newUnit.id}):`, deleteError.message);
+        console.error('You may need to delete it manually to avoid clutter.');
+        process.exit(1);
+    }
+
+    console.log(`✅ Keep-Alive SUCCESS — Dummy unit created and deleted without a trace.`);
     console.log(`⏰ Next ping in ~3 days (cron: 0 0 */3 * *)`);
 }
 
