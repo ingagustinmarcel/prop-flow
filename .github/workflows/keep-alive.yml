@@ -30,4 +30,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_USER_EMAIL: ${{ secrets.SUPABASE_USER_EMAIL }}
+          SUPABASE_USER_PASSWORD: ${{ secrets.SUPABASE_USER_PASSWORD }}
         run: node scripts/check-db.js
