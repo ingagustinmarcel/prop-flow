@@ -1,5 +1,8 @@
 name: Supabase Keep-Alive
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Runs every 3 days at midnight UTC to prevent Supabase from pausing the project.
 # Supabase pauses free-tier projects after 7 days of inactivity.
 on:
